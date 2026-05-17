@@ -3,23 +3,14 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --brand-primary:   #1450f5;
-    --brand-dark:      #141414;
-    --brand-cream:     #f3eee6;
-    --brand-yellow:    #ffe141;
-    --brand-lightblue: #d2f5ff;
-    --brand-pink:      #ffcdd7;
-    --brand-mint:      #aae1c8;
-  }
-
-  html { font-family: 'Inter', system-ui, sans-serif; }
-  body {
-    background-color: #f5f3ef;
-    color: #141414;
-    @apply antialiased;
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    background-color: #f0f3fa;
+    color: #111827;
   }
   * { box-sizing: border-box; }
 }
@@ -27,30 +18,40 @@
 @layer components {
   .card {
     background: #ffffff;
-    border-radius: 16px;
-    border: 1px solid #e8e3da;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e5e8ef;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.04);
   }
-
   .btn-primary {
-    @apply text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all;
     background-color: #1450f5;
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    border: none;
+    cursor: pointer;
+    transition: filter 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
-  .btn-primary:hover { filter: brightness(1.1); }
-
+  .btn-primary:hover { filter: brightness(1.12); }
   .btn-secondary {
-    @apply bg-white text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 transition-colors;
-    color: #141414;
+    background-color: #ffffff;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
-  .btn-secondary:hover { background-color: #f9f8f6; }
-
-  .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
-  }
-
-  ::-webkit-scrollbar       { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #d1c8bb; border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: #b0a898; }
+  .btn-secondary:hover { background-color: #f9fafb; }
 }

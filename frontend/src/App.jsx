@@ -6,9 +6,9 @@ import AnalyticsPage  from './pages/AnalyticsPage'
 import SlaConfigModal from './components/SlaConfigModal'
 
 const TABS = [
-  { id: 'dashboard', label: 'Dashboard',       icon: '▦' },
-  { id: 'priority',  label: 'Priority Tracker', icon: '⚑' },
-  { id: 'analytics', label: 'Analytics',        icon: '◈' },
+  { id: 'dashboard', label: 'Dashboard',        icon: <GridIcon /> },
+  { id: 'priority',  label: 'Priority Tracker',  icon: <FlagIcon /> },
+  { id: 'analytics', label: 'Analytics',         icon: <ChartIcon /> },
 ]
 
 export default function App() {
@@ -38,13 +38,9 @@ export default function App() {
 
   if (!sessionId || showUpload) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <AppHeader
-          hasSession={!!sessionId}
-          onBack={sessionId ? () => setShowUpload(false) : null}
-          onSlaConfig={() => setShowSlaConfig(true)}
-        />
-        <main className="flex-1 flex items-center justify-center p-6">
+      <div style={{ minHeight: '100vh', background: '#f0f3fa', display: 'flex', flexDirection: 'column' }}>
+        <AppHeader hasSession={!!sessionId} onBack={sessionId ? () => setShowUpload(false) : null} onSlaConfig={() => setShowSlaConfig(true)} />
+        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <UploadZone onUpload={handleUpload} />
         </main>
         {showSlaConfig && <SlaConfigModal onClose={() => setShowSlaConfig(false)} />}
@@ -53,7 +49,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div style={{ minHeight: '100vh', background: '#f0f3fa', display: 'flex', flexDirection: 'column' }}>
       <AppHeader
         filename={uploadMeta?.filename}
         totalRows={uploadMeta?.total_rows}
@@ -62,36 +58,41 @@ export default function App() {
       />
 
       {/* Tab bar */}
-      <div className="bg-brand-white border-b border-gray-200 px-6 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-screen-2xl mx-auto flex">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === t.id
-                  ? 'border-brand-primary text-brand-primary'
-                  : 'border-transparent text-gray-500 hover:text-brand-dark hover:border-gray-300'
-              }`}
-            >
-              <span className="text-base leading-none">{t.icon}</span>
-              {t.label}
-            </button>
-          ))}
+      <div style={{ background: '#ffffff', borderBottom: '1px solid #e5e8ef', padding: '0 24px', position: 'sticky', top: 0, zIndex: 20 }}>
+        <div style={{ maxWidth: 1600, margin: '0 auto', display: 'flex', gap: 4 }}>
+          {TABS.map((t) => {
+            const active = activeTab === t.id
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 7,
+                  padding: '12px 16px',
+                  fontSize: 13, fontWeight: active ? 600 : 500,
+                  color: active ? '#1450f5' : '#6b7280',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  borderBottom: active ? '2px solid #1450f5' : '2px solid transparent',
+                  transition: 'all 0.15s',
+                  fontFamily: 'Inter, sans-serif',
+                  marginBottom: -1,
+                }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = '#374151' }}
+                onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = '#6b7280' }}
+              >
+                <span style={{ opacity: active ? 1 : 0.7 }}>{t.icon}</span>
+                {t.label}
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      <main className="flex-1 px-4 sm:px-6 py-5">
-        <div className="max-w-screen-2xl mx-auto">
-          {activeTab === 'dashboard' && (
-            <DashboardPage sessionId={sessionId} onSessionExpired={handleSessionExpired} />
-          )}
-          {activeTab === 'priority' && (
-            <PriorityPage  sessionId={sessionId} onSessionExpired={handleSessionExpired} />
-          )}
-          {activeTab === 'analytics' && (
-            <AnalyticsPage sessionId={sessionId} onSessionExpired={handleSessionExpired} />
-          )}
+      <main style={{ flex: 1, padding: '24px', paddingBottom: 48 }}>
+        <div style={{ maxWidth: 1600, margin: '0 auto' }}>
+          {activeTab === 'dashboard' && <DashboardPage sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
+          {activeTab === 'priority'  && <PriorityPage  sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
+          {activeTab === 'analytics' && <AnalyticsPage sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
         </div>
       </main>
 
@@ -102,58 +103,107 @@ export default function App() {
 
 function AppHeader({ filename, totalRows, onReupload, onBack, onSlaConfig }) {
   return (
-    <header
-      className="text-white px-6 py-3 flex items-center gap-4 shadow-md flex-shrink-0"
-      style={{ backgroundColor: '#141414' }}
-    >
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        {/* Logo */}
-        <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: '#1450f5' }}
-        >
-          <span className="text-white text-xs font-bold">IQ</span>
+    <header style={{
+      background: '#ffffff',
+      borderBottom: '1px solid #e5e8ef',
+      padding: '0 24px',
+      height: 56,
+      display: 'flex', alignItems: 'center', gap: 16,
+      flexShrink: 0,
+    }}>
+      {/* Brand */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 8,
+          background: 'linear-gradient(135deg, #1450f5 0%, #3b70f7 100%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        }}>
+          <span style={{ color: '#fff', fontSize: 12, fontWeight: 800, letterSpacing: '-0.5px' }}>IQ</span>
         </div>
-        <span className="text-base font-bold tracking-tight">TicketIQ</span>
-
-        {filename && (
-          <div className="hidden sm:flex items-center gap-1.5 ml-2">
-            <span className="text-gray-500">·</span>
-            <span className="text-gray-400 text-sm truncate max-w-xs">{filename}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#1e2a3a', color: '#d2f5ff' }}>
-              {totalRows?.toLocaleString()} rows
-            </span>
-          </div>
-        )}
+        <span style={{ fontSize: 16, fontWeight: 700, color: '#111827', letterSpacing: '-0.3px' }}>TicketIQ</span>
       </div>
 
-      <div className="flex items-center gap-2 flex-shrink-0">
+      {/* Separator */}
+      <div style={{ width: 1, height: 20, background: '#e5e8ef', flexShrink: 0 }} />
+
+      {/* File info */}
+      {filename && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, overflow: 'hidden' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span style={{ fontSize: 13, color: '#6b7280', truncate: true, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>{filename}</span>
+          <span style={{
+            fontSize: 11, fontWeight: 600, color: '#1450f5',
+            background: '#eff4ff', border: '1px solid #c7d7fd',
+            borderRadius: 20, padding: '2px 8px', flexShrink: 0,
+          }}>
+            {totalRows?.toLocaleString()} rows
+          </span>
+        </div>
+      )}
+
+      {!filename && <div style={{ flex: 1 }} />}
+
+      {/* Actions */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
         <button
           onClick={onSlaConfig}
-          className="text-gray-400 hover:text-white text-sm px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
+          style={{
+            background: 'none', border: '1px solid #e5e7eb', borderRadius: 8,
+            padding: '6px 12px', fontSize: 13, fontWeight: 500, color: '#374151',
+            cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+          }}
         >
           SLA Config
         </button>
         {onBack && (
-          <button
-            onClick={onBack}
-            className="text-gray-400 hover:text-white text-sm px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
-          >
+          <button onClick={onBack} style={{ background: 'none', border: 'none', fontSize: 13, color: '#6b7280', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
             ← Back
           </button>
         )}
         {onReupload && (
           <button
             onClick={onReupload}
-            className="text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
-            style={{ backgroundColor: '#1450f5' }}
-            onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.15)'}
-            onMouseOut={(e)  => e.currentTarget.style.filter = ''}
+            style={{
+              background: '#1450f5', color: '#ffffff',
+              border: 'none', borderRadius: 8,
+              padding: '7px 14px', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}
           >
-            Upload New File
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Upload File
           </button>
         )}
       </div>
     </header>
+  )
+}
+
+function GridIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+    </svg>
+  )
+}
+function FlagIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+    </svg>
+  )
+}
+function ChartIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
+    </svg>
   )
 }

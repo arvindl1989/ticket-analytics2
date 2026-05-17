@@ -12,18 +12,14 @@ export default function PriorityPage({ sessionId, onSessionExpired }) {
   }, [sessionId, onSessionExpired])
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <h2 className="text-xl font-bold text-gray-800">Priority Tracker</h2>
-        <p className="text-sm text-gray-400 mt-0.5">
-          Ranked by SLA urgency · preferred live date · ticket age. Excludes Closed Completed & Closed Rejected.
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>Priority Tracker</h2>
+        <p style={{ fontSize: 13, color: '#9ca3af', margin: '3px 0 0' }}>
+          Ranked by SLA urgency · preferred live date · ticket age. Excludes Closed Completed &amp; Closed Rejected.
         </p>
       </div>
-      <PriorityTracker
-        sessionId={sessionId}
-        onSessionExpired={onSessionExpired}
-        overview={overview}
-      />
+      <PriorityTracker sessionId={sessionId} onSessionExpired={onSessionExpired} overview={overview} />
     </div>
   )
 }

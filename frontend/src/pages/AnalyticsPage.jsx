@@ -128,28 +128,24 @@ export default function AnalyticsPage({ sessionId, onSessionExpired }) {
   const filteredTeamPerf = teamPerf.filter((r) => !EXCLUDED_MEMBERS.has(r.assigned_to))
 
   return (
-    <div className="space-y-6 pb-16">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 48 }}>
 
       {/* ── Page header ── */}
-      <div className="flex items-center justify-between">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Analytics</h2>
-          <p className="text-sm text-gray-400 mt-0.5">Executive overview · all figures based on uploaded data</p>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>Analytics</h2>
+          <p style={{ fontSize: 13, color: '#9ca3af', margin: '3px 0 0' }}>Executive overview · all figures based on uploaded data</p>
         </div>
-        <button
-          onClick={() => window.print()}
-          className="btn-secondary flex items-center gap-1.5 text-sm print:hidden"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        <button onClick={() => window.print()} className="btn-secondary print:hidden">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
           Print
         </button>
       </div>
 
       {/* ── 1. KPI row ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
         <KpiCard
           label="SLA Compliance"
           value={slaRate != null ? `${slaRate}%` : '—'}
@@ -253,7 +249,7 @@ export default function AnalyticsPage({ sessionId, onSessionExpired }) {
       </Section>
 
       {/* ── 6. Backlog + Area (side by side) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <Section color={COLOR.red} title="Backlog Age" subtitle="How long active tickets have been open">
           <BacklogAgeChart data={backlogAge} />
         </Section>
@@ -314,7 +310,7 @@ export default function AnalyticsPage({ sessionId, onSessionExpired }) {
       </Section>
 
       {/* ── 9. Historical trends ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <Section color={COLOR.slate} title="Monthly Volume Trend" subtitle="All-time ticket creation by month">
           <MonthlyChart data={monthly} />
         </Section>
@@ -341,22 +337,23 @@ function Section({ color, title, subtitle, controls, children }) {
   return (
     <div style={{
       background: '#ffffff',
-      borderRadius: 16,
-      border: '1px solid #e8e3da',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+      borderRadius: 12,
+      border: '1px solid #e5e8ef',
+      borderLeft: `3px solid ${color}`,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.04)',
     }}>
-      <div style={{ height: 4, background: color, borderRadius: '16px 16px 0 0' }} />
       <div style={{
         padding: '14px 20px',
-        borderBottom: '1px solid #ede8e0',
-        background: '#faf8f5',
-        display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap',
+        borderBottom: '1px solid #f3f4f6',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-          <div>
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: '#141414', lineHeight: 1.3, margin: 0 }}>{title}</h3>
-            {subtitle && <p style={{ fontSize: 12, color: '#9ca3af', margin: '3px 0 0' }}>{subtitle}</p>}
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: '#111827', lineHeight: 1.3, margin: 0 }}>{title}</h3>
+            {subtitle && <p style={{ fontSize: 11, color: '#9ca3af', margin: '2px 0 0' }}>{subtitle}</p>}
           </div>
         </div>
         {controls && <div style={{ flexShrink: 0 }}>{controls}</div>}
@@ -379,18 +376,20 @@ function KpiCard({ label, value, detail, tier = 'neutral', icon }) {
   const t = TIER[tier] ?? TIER.neutral
   return (
     <div style={{
-      borderRadius: 14,
-      border: `1px solid ${t.border}`,
-      background: t.bg,
-      overflow: 'hidden',
+      borderRadius: 12,
+      border: '1px solid #e5e8ef',
+      borderTop: `3px solid ${t.bar}`,
+      background: '#ffffff',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
     }}>
-      <div style={{ height: 3, background: t.bar }} />
       <div style={{ padding: '16px 18px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: '#64748b', textTransform: 'uppercase', margin: 0 }}>{label}</p>
-          <span style={{ color: '#9ca3af', flexShrink: 0 }}>{icon}</span>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: '#6b7280', textTransform: 'uppercase', margin: 0 }}>{label}</p>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: t.bg, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.bar, flexShrink: 0 }}>
+            {icon}
+          </div>
         </div>
-        <p style={{ fontSize: 34, fontWeight: 800, letterSpacing: '-0.02em', color: t.numColor, lineHeight: 1, margin: '0 0 8px' }}>{value}</p>
+        <p style={{ fontSize: 34, fontWeight: 800, letterSpacing: '-0.02em', color: '#111827', lineHeight: 1, margin: '0 0 10px' }}>{value}</p>
         <p style={{ fontSize: 12, color: '#9ca3af', margin: 0, lineHeight: 1.4 }}>{detail}</p>
       </div>
     </div>
