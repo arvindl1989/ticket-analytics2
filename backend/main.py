@@ -666,10 +666,10 @@ def backlog_age(sid: str):
     active["ticket_age"] = pd.to_numeric(active.get("ticket_age", pd.Series()), errors="coerce")
 
     BUCKETS = [
-        ("0–7 days",   0,   7,  "#6366f1"),
-        ("8–30 days",  8,  30,  "#f59e0b"),
-        ("31–90 days", 31, 90,  "#f97316"),
-        ("91+ days",   91, None, "#ef4444"),
+        ("0–7 days",   0,   7,  "#d2f5ff"),
+        ("8–30 days",  8,  30,  "#ffe141"),
+        ("31–90 days", 31, 90,  "#ffcdd7"),
+        ("91+ days",   91, None, "#c0305a"),
     ]
     result = []
     for label, lo, hi, color in BUCKETS:

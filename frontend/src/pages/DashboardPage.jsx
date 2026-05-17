@@ -77,7 +77,7 @@ export default function DashboardPage({ sessionId, onSessionExpired }) {
     <div className="space-y-5">
 
       {/* ── Global filters ── */}
-      <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
+      <div style={{ background: '#ffffff', border: '1px solid #e8e3da', borderRadius: 16, padding: '12px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
         <DashboardFilters
           overview={overview}
           filters={filters}
@@ -93,7 +93,7 @@ export default function DashboardPage({ sessionId, onSessionExpired }) {
       </Card>
 
       {/* ── KPI row ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3" style={{ gap: 12 }}>
         <KpiTile label="Total Tickets"  value={totalAll}        theme="total"    wide />
         <KpiTile label="Resolved"       value={resolvedCount}   theme="resolved" />
         <KpiTile label="Unique Tickets" value={uniqueTickets}   theme="unique"   />
@@ -156,46 +156,65 @@ export default function DashboardPage({ sessionId, onSessionExpired }) {
 
 // ── Card shell ─────────────────────────────────────────────────────────────────
 
-function Card({ title, subtitle, accent = '#1450f5', children }) {
+function Card({ title, subtitle, accent = '#1450f5', controls, children }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="h-[3px]" style={{ backgroundColor: accent }} />
-      <div className="px-5 py-3.5 border-b border-gray-100" style={{ backgroundColor: '#faf9f7' }}>
-        <div className="flex items-center gap-2.5">
-          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: accent }} />
-          <div>
-            <h3 className="text-sm font-semibold leading-tight" style={{ color: '#141414' }}>{title}</h3>
-            {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+    <div style={{
+      background: '#ffffff',
+      borderRadius: 16,
+      border: '1px solid #e8e3da',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+    }}>
+      <div style={{ height: 4, background: accent, borderRadius: '16px 16px 0 0' }} />
+      <div style={{
+        padding: '14px 20px',
+        borderBottom: '1px solid #ede8e0',
+        background: '#faf8f5',
+        display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: accent, flexShrink: 0 }} />
+          <div style={{ minWidth: 0 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: '#141414', lineHeight: 1.3, margin: 0 }}>{title}</h3>
+            {subtitle && <p style={{ fontSize: 12, color: '#9ca3af', margin: '3px 0 0' }}>{subtitle}</p>}
           </div>
         </div>
+        {controls && <div style={{ flexShrink: 0 }}>{controls}</div>}
       </div>
-      <div className="p-5">{children}</div>
+      <div style={{ padding: 20 }}>{children}</div>
     </div>
   )
 }
 
 // ── KPI tile ───────────────────────────────────────────────────────────────────
 
-const TILE_THEMES = {
-  total:    { bg: '#d2f5ff', text: '#141414' },
-  resolved: { bg: '#aae1c8', text: '#141414' },
-  unique:   { bg: '#ffffff', text: '#141414' },
-  pipeline: { bg: '#d2f5ff', text: '#1450f5' },
-  depend:   { bg: '#ffe141', text: '#141414' },
-  overdue:  { bg: '#ffcdd7', text: '#141414' },
-  due5:     { bg: '#ffe141', text: '#141414' },
-  age:      { bg: '#f3eee6', text: '#141414' },
+const TILE_CONFIG = {
+  total:    { bg: '#d2f5ff', numColor: '#141414' },
+  resolved: { bg: '#aae1c8', numColor: '#141414' },
+  unique:   { bg: '#ffffff', numColor: '#141414' },
+  pipeline: { bg: '#d2f5ff', numColor: '#1450f5' },
+  depend:   { bg: '#ffe141', numColor: '#141414' },
+  overdue:  { bg: '#ffcdd7', numColor: '#141414' },
+  due5:     { bg: '#ffe141', numColor: '#141414' },
+  age:      { bg: '#f3eee6', numColor: '#141414' },
 }
 
 function KpiTile({ label, value, theme = 'unique', wide = false }) {
-  const t = TILE_THEMES[theme] ?? TILE_THEMES.unique
+  const t = TILE_CONFIG[theme] ?? TILE_CONFIG.unique
   return (
-    <div
-      className={`rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col gap-1 ${wide ? 'col-span-2' : ''}`}
-      style={{ backgroundColor: t.bg }}
-    >
-      <p className="text-xs font-medium uppercase tracking-wide leading-tight text-gray-500">{label}</p>
-      <p className="text-2xl font-bold tracking-tight" style={{ color: t.text }}>{value ?? '—'}</p>
+    <div style={{
+      backgroundColor: t.bg,
+      borderRadius: 14,
+      border: '1px solid rgba(0,0,0,0.07)',
+      padding: '18px 20px',
+      display: 'flex', flexDirection: 'column', gap: 8,
+      gridColumn: wide ? 'span 2' : 'span 1',
+    }}>
+      <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: '#64748b', textTransform: 'uppercase', margin: 0 }}>
+        {label}
+      </p>
+      <p style={{ fontSize: 38, fontWeight: 800, color: t.numColor, lineHeight: 1, letterSpacing: '-0.02em', margin: 0 }}>
+        {value ?? '—'}
+      </p>
     </div>
   )
 }

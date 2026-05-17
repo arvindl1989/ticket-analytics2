@@ -28,34 +28,33 @@ export default function StackedBarChart({ data, dimKey, height }) {
   const { rows = [], sub_categories = [] } = data ?? {}
   if (!rows.length) return <Empty />
 
-  const h = height ?? Math.max(200, rows.length * 36 + 60)
+  const h = height ?? Math.max(260, rows.length * 48 + 80)
+  const needsScroll = h > 550
 
-  return (
-    <ResponsiveContainer width="100%" height={h}>
-      <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 32, left: 115, bottom: 4 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-        <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} allowDecimals={false} />
-        <YAxis
-          type="category"
-          dataKey={dimKey}
-          tick={{ fontSize: 11, fill: '#374151' }}
-          width={110}
-          tickFormatter={(v) => v?.length > 16 ? v.slice(0, 14) + '…' : v}
-        />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend verticalAlign="top" wrapperStyle={{ fontSize: 10, paddingBottom: 6 }} />
-        {sub_categories.map((sc, i) => (
-          <Bar
-            key={sc}
-            dataKey={sc}
-            stackId="a"
-            fill={scColor(sc, i)}
-            radius={i === sub_categories.length - 1 ? [0, 3, 3, 0] : [0, 0, 0, 0]}
+  const chart = (
+    <div style={needsScroll ? { height: 550, overflowY: 'auto' } : {}}>
+      <ResponsiveContainer width="100%" height={h}>
+        <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 40, left: 120, bottom: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0ece4" horizontal={false} />
+          <XAxis type="number" tick={{ fontSize: 11, fill: '#9ca3af', fontFamily: 'Inter' }} allowDecimals={false} />
+          <YAxis
+            type="category"
+            dataKey={dimKey}
+            tick={{ fontSize: 11, fill: '#374151', fontFamily: 'Inter' }}
+            width={115}
+            tickFormatter={(v) => v?.length > 18 ? v.slice(0, 16) + '…' : v}
           />
-        ))}
-      </BarChart>
-    </ResponsiveContainer>
+          <Tooltip content={<CustomTooltip />} />
+          <Legend verticalAlign="top" wrapperStyle={{ fontSize: 11, paddingBottom: 8, fontFamily: 'Inter' }} />
+          {sub_categories.map((sc, i) => (
+            <Bar key={sc} dataKey={sc} stackId="a" fill={scColor(sc, i)}
+              radius={i === sub_categories.length - 1 ? [0, 4, 4, 0] : [0, 0, 0, 0]} />
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   )
+  return chart
 }
 
 function Empty() {

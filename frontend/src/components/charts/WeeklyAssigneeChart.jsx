@@ -4,8 +4,8 @@ import {
 } from 'recharts'
 
 const COLORS = [
-  '#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6',
-  '#8b5cf6','#ec4899','#14b8a6','#f97316','#84cc16',
+  '#1450f5','#b87d00','#1e8a5e','#0077a8','#c0305a',
+  '#7c3aed','#ea580c','#0f766e','#db2777','#65a30d',
 ]
 
 export default function WeeklyAssigneeChart({ data = [], assignees = [], limit = 16 }) {
@@ -27,12 +27,11 @@ export default function WeeklyAssigneeChart({ data = [], assignees = [], limit =
             <button
               key={a}
               onClick={() => toggle(a)}
-              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                people.includes(a)
-                  ? 'text-white border-transparent'
-                  : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-              }`}
-              style={people.includes(a) ? { backgroundColor: COLORS[i % COLORS.length] } : {}}
+              className="text-xs px-2.5 py-1 rounded-full border transition-colors"
+              style={people.includes(a)
+                ? { backgroundColor: COLORS[i % COLORS.length], color: '#ffffff', borderColor: 'transparent' }
+                : { backgroundColor: '#ffffff', color: '#6b7280', borderColor: '#e5e7eb' }
+              }
             >
               {a}
             </button>
@@ -46,21 +45,21 @@ export default function WeeklyAssigneeChart({ data = [], assignees = [], limit =
       )}
 
       <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={visible} margin={{ top: 5, right: 10, left: 0, bottom: 70 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+        <BarChart data={visible} margin={{ top: 8, right: 10, left: 0, bottom: 80 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0ece4" />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 10, fill: '#6b7280' }}
+            tick={{ fontSize: 11, fill: '#9ca3af', fontFamily: 'Inter' }}
             angle={-45}
             textAnchor="end"
             interval={0}
           />
-          <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} allowDecimals={false} />
+          <YAxis tick={{ fontSize: 11, fill: '#9ca3af', fontFamily: 'Inter' }} allowDecimals={false} />
           <Tooltip
-            contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
-            cursor={{ fill: '#f9fafb' }}
+            contentStyle={{ borderRadius: 10, border: '1px solid #e8e3da', fontSize: 12, fontFamily: 'Inter' }}
+            cursor={{ fill: '#f5f3ef' }}
           />
-          <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
+          <Legend verticalAlign="top" wrapperStyle={{ fontSize: 11, paddingBottom: 8, fontFamily: 'Inter' }} />
           {people.map((a, i) => (
             <Bar key={a} dataKey={a} stackId="a" fill={COLORS[i % COLORS.length]} />
           ))}

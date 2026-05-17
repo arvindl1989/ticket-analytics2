@@ -339,19 +339,29 @@ export default function AnalyticsPage({ sessionId, onSessionExpired }) {
 
 function Section({ color, title, subtitle, controls, children }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="h-[3px]" style={{ backgroundColor: color }} />
-      <div className="px-6 py-4 flex flex-wrap items-center gap-3 border-b border-gray-100" style={{ backgroundColor: '#faf9f7' }}>
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold leading-tight" style={{ color: '#141414' }}>{title}</h3>
-            {subtitle && <p className="text-xs text-gray-400 mt-0.5 truncate">{subtitle}</p>}
+    <div style={{
+      background: '#ffffff',
+      borderRadius: 16,
+      border: '1px solid #e8e3da',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+    }}>
+      <div style={{ height: 4, background: color, borderRadius: '16px 16px 0 0' }} />
+      <div style={{
+        padding: '14px 20px',
+        borderBottom: '1px solid #ede8e0',
+        background: '#faf8f5',
+        display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+          <div>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: '#141414', lineHeight: 1.3, margin: 0 }}>{title}</h3>
+            {subtitle && <p style={{ fontSize: 12, color: '#9ca3af', margin: '3px 0 0' }}>{subtitle}</p>}
           </div>
         </div>
-        {controls && <div className="flex-shrink-0">{controls}</div>}
+        {controls && <div style={{ flexShrink: 0 }}>{controls}</div>}
       </div>
-      <div className="p-6">{children}</div>
+      <div style={{ padding: 20 }}>{children}</div>
     </div>
   )
 }
@@ -359,24 +369,29 @@ function Section({ color, title, subtitle, controls, children }) {
 // ── KPI card ───────────────────────────────────────────────────────────────────
 
 const TIER = {
-  good:    { bar: '#1e8a5e', val: '#141414', bg: '#edfff6', border: '#aae1c8' },
-  warn:    { bar: '#b87d00', val: '#141414', bg: '#fffde8', border: '#ffe141' },
-  bad:     { bar: '#c0305a', val: '#141414', bg: '#fff0f4', border: '#ffcdd7' },
-  neutral: { bar: '#1450f5', val: '#1450f5', bg: '#eef3ff', border: '#d2f5ff' },
+  good:    { bar: '#1e8a5e', numColor: '#141414', bg: '#f0fff8', border: '#aae1c8' },
+  warn:    { bar: '#b87d00', numColor: '#141414', bg: '#fffde8', border: '#ffe141' },
+  bad:     { bar: '#c0305a', numColor: '#141414', bg: '#fff0f4', border: '#ffcdd7' },
+  neutral: { bar: '#1450f5', numColor: '#1450f5', bg: '#eef3ff', border: '#d2f5ff' },
 }
 
 function KpiCard({ label, value, detail, tier = 'neutral', icon }) {
   const t = TIER[tier] ?? TIER.neutral
   return (
-    <div className="rounded-xl overflow-hidden shadow-sm border" style={{ borderColor: t.border, backgroundColor: t.bg }}>
-      <div className="h-1" style={{ backgroundColor: t.bar }} />
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider leading-tight">{label}</p>
-          <span className="text-gray-400 flex-shrink-0">{icon}</span>
+    <div style={{
+      borderRadius: 14,
+      border: `1px solid ${t.border}`,
+      background: t.bg,
+      overflow: 'hidden',
+    }}>
+      <div style={{ height: 3, background: t.bar }} />
+      <div style={{ padding: '16px 18px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: '#64748b', textTransform: 'uppercase', margin: 0 }}>{label}</p>
+          <span style={{ color: '#9ca3af', flexShrink: 0 }}>{icon}</span>
         </div>
-        <p className="text-3xl font-bold tracking-tight" style={{ color: t.val }}>{value}</p>
-        <p className="text-xs text-gray-400 mt-2 leading-snug">{detail}</p>
+        <p style={{ fontSize: 34, fontWeight: 800, letterSpacing: '-0.02em', color: t.numColor, lineHeight: 1, margin: '0 0 8px' }}>{value}</p>
+        <p style={{ fontSize: 12, color: '#9ca3af', margin: 0, lineHeight: 1.4 }}>{detail}</p>
       </div>
     </div>
   )

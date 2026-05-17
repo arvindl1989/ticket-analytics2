@@ -13,40 +13,44 @@
     --brand-mint:      #aae1c8;
   }
 
+  html { font-family: 'Inter', system-ui, sans-serif; }
   body {
-    background-color: var(--brand-cream);
-    color: var(--brand-dark);
+    background-color: #f5f3ef;
+    color: #141414;
     @apply antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-
-  * { @apply box-border; }
+  * { box-sizing: border-box; }
 }
 
 @layer components {
   .card {
-    @apply bg-white rounded-xl border border-gray-200 shadow-sm p-5;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e8e3da;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 20px;
   }
 
   .btn-primary {
-    background-color: var(--brand-primary);
-    @apply text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all;
+    background-color: #1450f5;
   }
   .btn-primary:hover { filter: brightness(1.1); }
 
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-sm font-medium px-4 py-2
-           rounded-lg border border-gray-200 transition-colors;
-    color: var(--brand-dark);
+    @apply bg-white text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 transition-colors;
+    color: #141414;
   }
+  .btn-secondary:hover { background-color: #f9f8f6; }
 
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
   }
 
-  /* Thin scrollbars */
   ::-webkit-scrollbar       { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+  ::-webkit-scrollbar-thumb { background: #d1c8bb; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #b0a898; }
 }

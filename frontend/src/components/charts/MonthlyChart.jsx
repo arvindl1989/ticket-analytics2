@@ -6,24 +6,24 @@ export default function MonthlyChart({ data = [] }) {
   if (!data.length) return <Empty />
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 60 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+    <ResponsiveContainer width="100%" height={320}>
+      <BarChart data={data} margin={{ top: 8, right: 10, left: 0, bottom: 80 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#f0ece4" />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fill: '#6b7280' }}
+          tick={{ fontSize: 11, fill: '#9ca3af', fontFamily: 'Inter' }}
           angle={-40}
           textAnchor="end"
           interval={0}
         />
-        <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} allowDecimals={false} />
+        <YAxis tick={{ fontSize: 11, fill: '#9ca3af', fontFamily: 'Inter' }} allowDecimals={false} />
         <Tooltip
-          contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
-          cursor={{ fill: '#f3f4f6' }}
+          contentStyle={{ borderRadius: 10, border: '1px solid #e8e3da', fontSize: 12, fontFamily: 'Inter' }}
+          cursor={{ fill: '#f5f3ef' }}
         />
         <Bar dataKey="count" name="Tickets Created" radius={[4, 4, 0, 0]}>
           {data.map((_, i) => (
-            <Cell key={i} fill="#6366f1" />
+            <Cell key={i} fill="#1450f5" />
           ))}
         </Bar>
       </BarChart>

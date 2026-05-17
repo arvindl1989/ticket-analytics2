@@ -24,24 +24,24 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
-export default function StackedColumnChart({ data, xKey = 'label', height = 300 }) {
+export default function StackedColumnChart({ data, xKey = 'label', height = 320 }) {
   const { rows = [], sub_categories = [] } = data ?? {}
   if (!rows.length) return <Empty />
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={rows} margin={{ top: 4, right: 10, left: 0, bottom: 65 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+      <BarChart data={rows} margin={{ top: 8, right: 10, left: 0, bottom: 80 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#f0ece4" />
         <XAxis
           dataKey={xKey}
-          tick={{ fontSize: 10, fill: '#94a3b8' }}
+          tick={{ fontSize: 11, fill: '#9ca3af', fontFamily: 'Inter' }}
           angle={-40}
           textAnchor="end"
           interval={0}
         />
-        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} allowDecimals={false} />
+        <YAxis tick={{ fontSize: 11, fill: '#9ca3af', fontFamily: 'Inter' }} allowDecimals={false} />
         <Tooltip content={<CustomTooltip />} />
-        <Legend verticalAlign="top" wrapperStyle={{ fontSize: 10, paddingBottom: 6 }} />
+        <Legend verticalAlign="top" wrapperStyle={{ fontSize: 11, paddingBottom: 8, fontFamily: 'Inter' }} />
         {sub_categories.map((sc, i) => (
           <Bar
             key={sc}

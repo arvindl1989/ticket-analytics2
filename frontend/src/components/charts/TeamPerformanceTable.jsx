@@ -5,22 +5,22 @@ export default function TeamPerformanceTable({ data = [] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b-2 border-gray-100">
+          <tr style={{ borderBottom: '2px solid #ede8e0' }}>
             {['Team Member', 'Active', 'Overdue', 'Critical+', 'SLA Compliance', 'Avg Resolution', 'Total Closed'].map((h) => (
-              <th key={h} className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+              <th key={h} className="text-left px-4 py-3 whitespace-nowrap" style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-50">
-          {data.map((r) => (
-            <tr key={r.assigned_to} className="hover:bg-gray-50 transition-colors">
-              <td className="px-4 py-3.5 font-semibold text-gray-800">{r.assigned_to}</td>
+        <tbody>
+          {data.map((r, idx) => (
+            <tr key={r.assigned_to} style={{ borderBottom: '1px solid #f0ece4', backgroundColor: idx % 2 === 0 ? '#ffffff' : '#faf8f5' }}>
+              <td className="px-4 py-3.5 font-semibold" style={{ color: '#141414' }}>{r.assigned_to}</td>
 
               {/* Active */}
               <td className="px-4 py-3.5">
-                <span className={`font-bold text-base ${r.active > 15 ? 'text-amber-600' : 'text-gray-700'}`}>
+                <span style={{ fontWeight: 700, fontSize: 15, color: r.active > 15 ? '#b87d00' : '#374151' }}>
                   {r.active}
                 </span>
               </td>
@@ -28,63 +28,67 @@ export default function TeamPerformanceTable({ data = [] }) {
               {/* Overdue */}
               <td className="px-4 py-3.5">
                 {r.overdue > 0 ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 700, backgroundColor: '#ffcdd7', color: '#141414' }}>
                     ● {r.overdue}
                   </span>
                 ) : (
-                  <span className="text-green-500 text-xs font-medium">✓ Clear</span>
+                  <span style={{ color: '#1e8a5e', fontSize: 12, fontWeight: 600 }}>✓ Clear</span>
                 )}
               </td>
 
               {/* Critical */}
               <td className="px-4 py-3.5">
                 {r.critical > 0 ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 700, backgroundColor: '#ffe141', color: '#141414' }}>
                     {r.critical}
                   </span>
                 ) : (
-                  <span className="text-gray-300 text-xs">—</span>
+                  <span style={{ color: '#d1d5db', fontSize: 12 }}>—</span>
                 )}
               </td>
 
               {/* SLA Compliance bar */}
-              <td className="px-4 py-3.5 min-w-[160px]">
+              <td className="px-4 py-3.5" style={{ minWidth: 160 }}>
                 {r.sla_compliance_pct != null ? (
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ flex: 1, height: 6, background: '#ede8e0', borderRadius: 99, overflow: 'hidden' }}>
                       <div
-                        className={`h-2 rounded-full transition-all ${
-                          r.sla_compliance_pct >= 80 ? 'bg-green-500'
-                          : r.sla_compliance_pct >= 60 ? 'bg-amber-500'
-                          : 'bg-red-500'
-                        }`}
-                        style={{ width: `${r.sla_compliance_pct}%` }}
+                        style={{
+                          height: 6,
+                          borderRadius: 99,
+                          width: `${r.sla_compliance_pct}%`,
+                          backgroundColor: r.sla_compliance_pct >= 80 ? '#1e8a5e'
+                            : r.sla_compliance_pct >= 60 ? '#b87d00'
+                            : '#c0305a',
+                          transition: 'width 0.4s ease',
+                        }}
                       />
                     </div>
-                    <span className={`text-xs font-bold w-10 text-right ${
-                      r.sla_compliance_pct >= 80 ? 'text-green-600'
-                      : r.sla_compliance_pct >= 60 ? 'text-amber-600'
-                      : 'text-red-600'
-                    }`}>
+                    <span style={{
+                      fontSize: 12, fontWeight: 700, width: 36, textAlign: 'right',
+                      color: r.sla_compliance_pct >= 80 ? '#1e8a5e'
+                        : r.sla_compliance_pct >= 60 ? '#b87d00'
+                        : '#c0305a',
+                    }}>
                       {r.sla_compliance_pct}%
                     </span>
                   </div>
                 ) : (
-                  <span className="text-gray-300 text-xs">No closed tickets</span>
+                  <span style={{ color: '#d1d5db', fontSize: 12 }}>No closed tickets</span>
                 )}
               </td>
 
               {/* Avg resolution */}
-              <td className="px-4 py-3.5 text-gray-600">
+              <td className="px-4 py-3.5" style={{ color: '#6b7280' }}>
                 {r.avg_resolution_days != null ? (
-                  <span className={r.avg_resolution_days > 20 ? 'text-amber-600 font-medium' : ''}>
+                  <span style={r.avg_resolution_days > 20 ? { color: '#b87d00', fontWeight: 600 } : {}}>
                     {r.avg_resolution_days}d
                   </span>
                 ) : '—'}
               </td>
 
               {/* Total closed */}
-              <td className="px-4 py-3.5 text-gray-500 font-medium">{r.closed_total}</td>
+              <td className="px-4 py-3.5" style={{ color: '#6b7280', fontWeight: 500 }}>{r.closed_total}</td>
             </tr>
           ))}
         </tbody>
