@@ -1,146 +1,186 @@
-import { useEffect, useState } from 'react'
-import { getOverview, getMonthlyCreated, getWeeklyComparison } from '../api'
-import SummaryCards from '../components/SummaryCards'
-import MonthlyChart from '../components/charts/MonthlyChart'
-import WeeklyChart from '../components/charts/WeeklyChart'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import {
+  getOverview, getHubHealth,
+  getStackedByArea, getStackedByTeam, getStackedByCreator,
+  getResolvedBySpecialist, getMonthlyStacked, getWeeklyStacked,
+  getBacklogAge,
+} from '../api'
+import HubHealthBar    from '../components/HubHealthBar'
+import DashboardFilters from '../components/DashboardFilters'
+import StackedBarChart  from '../components/charts/StackedBarChart'
+import StackedColumnChart from '../components/charts/StackedColumnChart'
+import BacklogAgeChart  from '../components/charts/BacklogAgeChart'
+
+const EXCLUDED = new Set(['Dheera Sameera', 'Pooja V', 'Suresh Karthik'])
+
+function useRefetch(fn, set, onErr, deps) {
+  const ref = useRef(0)
+  useEffect(() => {
+    const id = ++ref.current
+    fn().then((d) => { if (id === ref.current) set(d) }).catch(onErr)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps)
+}
+
+const INIT_FILTERS = { assigned_to: '', team: '', area: '', sub_category: '' }
 
 export default function DashboardPage({ sessionId, onSessionExpired }) {
-  const [overview, setOverview] = useState(null)
-  const [monthly, setMonthly] = useState([])
-  const [weekly, setWeekly] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [overview,    setOverview]    = useState(null)
+  const [hubHealth,   setHubHealth]   = useState(null)
+  const [byArea,      setByArea]      = useState({ rows: [], sub_categories: [] })
+  const [byTeam,      setByTeam]      = useState({ rows: [], sub_categories: [] })
+  const [byCreator,   setByCreator]   = useState({ rows: [], sub_categories: [] })
+  const [bySpecialist,setBySpecialist]= useState({ rows: [], sub_categories: [] })
+  const [monthly,     setMonthly]     = useState({ rows: [], sub_categories: [] })
+  const [inflow,      setInflow]      = useState({ rows: [], sub_categories: [] })
+  const [outflow,     setOutflow]     = useState({ rows: [], sub_categories: [] })
+  const [backlogAge,  setBacklogAge]  = useState([])
 
+  const [filters, setFilters] = useState(INIT_FILTERS)
+  const [range,   setRange]   = useState({ from: '', to: '' })
+
+  const onErr = useCallback((err) => { if (err.sessionExpired) onSessionExpired() }, [onSessionExpired])
+
+  const onFilter = useCallback((key, val) => {
+    if (key === '__reset__') { setFilters(INIT_FILTERS); return }
+    setFilters((f) => ({ ...f, [key]: val }))
+  }, [])
+
+  // One-time / filter-independent
   useEffect(() => {
-    setLoading(true)
-    Promise.all([
-      getOverview(sessionId),
-      getMonthlyCreated(sessionId),
-      getWeeklyComparison(sessionId),
-    ])
-      .then(([ov, mo, wk]) => {
-        setOverview(ov)
-        setMonthly(mo)
-        setWeekly(wk)
-      })
-      .catch((err) => {
-        if (err.sessionExpired) onSessionExpired()
-        else setError(err.message)
-      })
-      .finally(() => setLoading(false))
-  }, [sessionId, onSessionExpired])
+    getOverview(sessionId).then(setOverview).catch(onErr)
+    getBacklogAge(sessionId).then(setBacklogAge).catch(onErr)
+  }, [sessionId, onErr])
 
-  if (loading) return <Spinner />
-  if (error) return <ErrorMsg msg={error} />
+  // Filter-sensitive fetches
+  const fDeps = [range.from, range.to, JSON.stringify(filters)]
 
-  const overduePct = overview?.total_active
-    ? Math.round((overview.overdue_sla / overview.total_active) * 100)
-    : 0
+  useRefetch(() => getHubHealth(sessionId, range.from, range.to, filters),           setHubHealth,    onErr, fDeps)
+  useRefetch(() => getStackedByArea(sessionId, range.from, range.to, filters),       setByArea,       onErr, fDeps)
+  useRefetch(() => getStackedByTeam(sessionId, range.from, range.to, filters),       setByTeam,       onErr, fDeps)
+  useRefetch(() => getStackedByCreator(sessionId, range.from, range.to, filters, 20),setByCreator,    onErr, fDeps)
+  useRefetch(() => getResolvedBySpecialist(sessionId, range.from, range.to, filters),setBySpecialist, onErr, fDeps)
+  useRefetch(() => getMonthlyStacked(sessionId, range.from, range.to, filters),      setMonthly,      onErr, fDeps)
+  useRefetch(() => getWeeklyStacked(sessionId, 'created_date', range.from, range.to, filters),setInflow, onErr, fDeps)
+  useRefetch(() => getWeeklyStacked(sessionId, 'closed_date',  range.from, range.to, filters),setOutflow,onErr, fDeps)
+
+  const resolvedCount = hubHealth?.resolved    ?? 0
+  const totalAll      = hubHealth?.total       ?? overview?.total_all ?? 0
+  const inPipeline    = hubHealth?.in_pipeline ?? overview?.total_active ?? 0
+  const uniqueTickets = hubHealth?.unique      ?? totalAll
+  const dependency    = hubHealth?.dependency  ?? 0
+  const overdueSla    = overview?.overdue_sla  ?? 0
+  const due5          = overview?.due_within_5 ?? 0
+  const avgAge        = overview?.avg_age      ?? 0
 
   return (
-    <div className="space-y-6">
-      <SummaryCards data={overview} />
+    <div className="space-y-5">
 
-      {/* SLA health banner */}
-      {overview?.overdue_sla > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-3 flex items-center gap-3">
-          <span className="text-red-500 text-lg">⚠</span>
-          <p className="text-sm text-red-700">
-            <span className="font-semibold">{overview.overdue_sla} ticket{overview.overdue_sla !== 1 ? 's' : ''}</span>
-            {' '}have breached SLA ({overduePct}% of active). Switch to the{' '}
-            <span className="font-semibold">Priority Tracker</span> to take action.
-          </p>
-        </div>
-      )}
+      {/* ── Global filters ── */}
+      <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
+        <DashboardFilters
+          overview={overview}
+          filters={filters}
+          range={range}
+          onFilter={onFilter}
+          onRange={setRange}
+        />
+      </div>
 
-      {/* Team workload snapshot */}
-      {overview?.assigned_to_list?.length > 0 && (
-        <div className="card">
-          <h3 className="font-semibold text-gray-700 mb-3">Team SLA Status</h3>
-          <TeamStatusTable sessionId={sessionId} assignees={overview.assigned_to_list} />
-        </div>
-      )}
+      {/* ── Hub Health ── */}
+      <Card title="Hub Health" accent="#1d4ed8">
+        <HubHealthBar data={hubHealth} />
+      </Card>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="card">
-          <h3 className="font-semibold text-gray-700 mb-4">Tickets Created Per Month</h3>
-          <MonthlyChart data={monthly} />
-        </div>
+      {/* ── KPI row ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+        <KpiTile label="Total Tickets"  value={totalAll}      wide />
+        <KpiTile label="Resolved"       value={resolvedCount} color="#059669" />
+        <KpiTile label="Unique Tickets" value={uniqueTickets} />
+        <KpiTile label="In Pipeline"    value={inPipeline}    color="#3b82f6" />
+        <KpiTile label="Dependency"     value={dependency}    color="#f59e0b" />
+        <KpiTile label="Overdue SLA"    value={overdueSla}    color={overdueSla > 0 ? '#ef4444' : '#059669'} />
+        <KpiTile label="Due ≤ 5d"       value={due5}          color={due5 > 0 ? '#f97316' : '#059669'} />
+        <KpiTile label="Avg Age"        value={`${avgAge}d`}  />
+      </div>
 
-        <div className="card">
-          <h3 className="font-semibold text-gray-700 mb-1">Weekly Created vs Closed</h3>
-          <p className="text-xs text-gray-400 mb-4">Last 26 weeks</p>
-          <WeeklyChart data={weekly} limit={26} />
+      {/* ── Row: By Area + By Team ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <Card title="Tickets by Area" subtitle="All tickets · stacked by sub-category" accent="#1d4ed8">
+          <StackedBarChart data={byArea} dimKey="area" />
+        </Card>
+        <Card title="Tickets by Team" subtitle="All tickets · stacked by sub-category" accent="#d97706">
+          <StackedBarChart data={byTeam} dimKey="team" />
+        </Card>
+      </div>
+
+      {/* ── Resolved by Specialist ── */}
+      <Card title="Resolved by Specialist" subtitle="Closed tickets per team member · stacked by sub-category" accent="#059669">
+        <StackedBarChart
+          data={{
+            ...bySpecialist,
+            rows: bySpecialist.rows.filter((r) => !EXCLUDED.has(r.assigned_to)),
+          }}
+          dimKey="assigned_to"
+        />
+      </Card>
+
+      {/* ── Tickets by Requestor ── */}
+      <Card title="Tickets by Requestor" subtitle="Top 20 ticket creators · stacked by sub-category" accent="#7c3aed">
+        <StackedBarChart data={byCreator} dimKey="ticket_creator" />
+      </Card>
+
+      {/* ── Monthly Inflow Trend ── */}
+      <Card title="Ticket Inflow Trend — Month Wise" subtitle="All ticket creation over time · stacked by sub-category" accent="#0891b2">
+        <StackedColumnChart data={monthly} xKey="label" height={320} />
+      </Card>
+
+      {/* ── Weekly Inflow + Outflow ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <Card title="Weekly Ticket Inflow" subtitle="Created tickets · last 26 weeks · stacked by sub-category" accent="#6366f1">
+          <StackedColumnChart data={inflow} xKey="label" height={300} />
+        </Card>
+        <Card title="Weekly Ticket Outflow" subtitle="Closed tickets · last 26 weeks · stacked by sub-category" accent="#059669">
+          <StackedColumnChart data={outflow} xKey="label" height={300} />
+        </Card>
+      </div>
+
+      {/* ── Backlog Age ── */}
+      <Card title="Days Since Ticket Created" subtitle="Age distribution of active (open) tickets" accent="#ef4444">
+        <BacklogAgeChart data={backlogAge} />
+      </Card>
+
+    </div>
+  )
+}
+
+// ── Card shell ─────────────────────────────────────────────────────────────────
+
+function Card({ title, subtitle, accent = '#6366f1', children }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="h-[3px]" style={{ backgroundColor: accent }} />
+      <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center gap-2.5">
+          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: accent }} />
+          <div>
+            <h3 className="text-sm font-semibold text-gray-800 leading-tight">{title}</h3>
+            {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+          </div>
         </div>
       </div>
+      <div className="p-5">{children}</div>
     </div>
   )
 }
 
-function TeamStatusTable({ sessionId, assignees }) {
-  const [rows, setRows] = useState([])
+// ── KPI tile ───────────────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    import('../api').then(({ getPriority }) => {
-      Promise.all(
-        assignees.map((a) =>
-          getPriority(sessionId, { assigned_to: a, limit: 200 }).then((tickets) => {
-            const overdue = tickets.filter((t) => t.priority_label === 'Overdue').length
-            const critical = tickets.filter((t) => t.priority_label === 'Critical').length
-            const high = tickets.filter((t) => t.priority_label === 'High').length
-            return { name: a, total: tickets.length, overdue, critical, high }
-          })
-        )
-      ).then(setRows)
-    })
-  }, [sessionId, assignees])
-
-  if (!rows.length) return <div className="text-sm text-gray-400">Loading…</div>
-
+function KpiTile({ label, value, color = '#374151', wide = false }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-100">
-            {['Assignee', 'Active', 'Overdue', 'Critical', 'High'].map((h) => (
-              <th key={h} className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-50">
-          {rows
-            .sort((a, b) => b.overdue - a.overdue || b.critical - a.critical || b.total - a.total)
-            .map((r) => (
-              <tr key={r.name} className="hover:bg-gray-50">
-                <td className="py-2 px-3 font-medium">{r.name}</td>
-                <td className="py-2 px-3 text-gray-600">{r.total}</td>
-                <td className="py-2 px-3">
-                  {r.overdue > 0 ? <span className="badge bg-red-100 text-red-700">{r.overdue}</span> : <span className="text-gray-300">—</span>}
-                </td>
-                <td className="py-2 px-3">
-                  {r.critical > 0 ? <span className="badge bg-orange-100 text-orange-700">{r.critical}</span> : <span className="text-gray-300">—</span>}
-                </td>
-                <td className="py-2 px-3">
-                  {r.high > 0 ? <span className="badge bg-amber-100 text-amber-700">{r.high}</span> : <span className="text-gray-300">—</span>}
-                </td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
+    <div className={`bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col gap-1 ${wide ? 'col-span-2 sm:col-span-2' : ''}`}>
+      <p className="text-xs text-gray-400 font-medium uppercase tracking-wide leading-tight">{label}</p>
+      <p className="text-2xl font-bold tracking-tight" style={{ color }}>{value ?? '—'}</p>
     </div>
   )
-}
-
-function Spinner() {
-  return (
-    <div className="flex items-center justify-center h-64">
-      <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-    </div>
-  )
-}
-
-function ErrorMsg({ msg }) {
-  return <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{msg}</div>
 }

@@ -113,6 +113,55 @@ export async function getBacklogAge(sid) {
   return data
 }
 
+export async function getHubHealth(sid, dateFrom, dateTo, dimFilters = {}) {
+  const { data } = await client.get(`/sessions/${sid}/hub-health`, {
+    params: _clean({ date_from: dateFrom, date_to: dateTo, ...dimFilters }),
+  })
+  return data
+}
+
+export async function getStackedByArea(sid, dateFrom, dateTo, dimFilters = {}) {
+  const { data } = await client.get(`/sessions/${sid}/stacked-by-area`, {
+    params: _clean({ date_from: dateFrom, date_to: dateTo, ...dimFilters }),
+  })
+  return data
+}
+
+export async function getStackedByTeam(sid, dateFrom, dateTo, dimFilters = {}) {
+  const { data } = await client.get(`/sessions/${sid}/stacked-by-team`, {
+    params: _clean({ date_from: dateFrom, date_to: dateTo, ...dimFilters }),
+  })
+  return data
+}
+
+export async function getStackedByCreator(sid, dateFrom, dateTo, dimFilters = {}, topN = 20) {
+  const { data } = await client.get(`/sessions/${sid}/stacked-by-creator`, {
+    params: _clean({ date_from: dateFrom, date_to: dateTo, top_n: topN, ...dimFilters }),
+  })
+  return data
+}
+
+export async function getResolvedBySpecialist(sid, dateFrom, dateTo, dimFilters = {}) {
+  const { data } = await client.get(`/sessions/${sid}/resolved-by-specialist`, {
+    params: _clean({ date_from: dateFrom, date_to: dateTo, ...dimFilters }),
+  })
+  return data
+}
+
+export async function getMonthlyStacked(sid, dateFrom, dateTo, dimFilters = {}) {
+  const { data } = await client.get(`/sessions/${sid}/monthly-stacked`, {
+    params: _clean({ date_from: dateFrom, date_to: dateTo, ...dimFilters }),
+  })
+  return data
+}
+
+export async function getWeeklyStacked(sid, dateCol = 'created_date', dateFrom, dateTo, dimFilters = {}, limit = 26) {
+  const { data } = await client.get(`/sessions/${sid}/weekly-stacked`, {
+    params: _clean({ date_col: dateCol, date_from: dateFrom, date_to: dateTo, limit, ...dimFilters }),
+  })
+  return data
+}
+
 export async function getSlaRules() {
   const { data } = await client.get('/sla-rules')
   return data

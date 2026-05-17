@@ -693,6 +693,212 @@ def update_sla_rules(rules: dict[str, int]):
     SLA_RULES.update(rules)
     return {"message": "SLA rules updated", "rules": SLA_RULES}
 
+# ── Hub health ─────────────────────────────────────────────────────────────────
+
+@app.get("/api/sessions/{sid}/hub-health")
+def hub_health(
+    sid: str,
+    date_from:    Optional[str] = None,
+    date_to:      Optional[str] = None,
+    team:         Optional[str] = None,
+    area:         Optional[str] = None,
+    sub_category: Optional[str] = None,
+    assigned_to:  Optional[str] = None,
+):
+    df  = _get_session(sid)
+    tmp = _filter_by_range(df, "created_date", date_from, date_to)
+    tmp = _apply_dim_filters(tmp, assigned_to=assigned_to, team=team, area=area, sub_category=sub_category)
+
+    total = len(tmp)
+    RESOLVED = {"Closed Completed", "Closed Rejected", "Confirmation Completed"}
+    resolved  = int(tmp["state"].isin(RESOLVED).sum()) if "state" in tmp.columns else 0
+    active_ct = int(tmp["is_active"].sum())             if "is_active" in tmp.columns else 0
+    unique    = int(tmp["ticket_number"].dropna().nunique()) if "ticket_number" in tmp.columns else total
+
+    dependency = 0
+    if "state" in tmp.columns:
+        dependency = int(tmp["state"].fillna("").str.lower().str.contains("depend|block|hold").sum())
+
+    by_state = []
+    if "state" in tmp.columns:
+        counts   = tmp.dropna(subset=["state"]).groupby("state").size().reset_index(name="count")
+        by_state = [{"state": r["state"], "count": int(r["count"])}
+                    for _, r in counts.sort_values("count", ascending=False).iterrows()]
+
+    return {
+        "total":       total,
+        "resolved":    resolved,
+        "unique":      unique,
+        "in_pipeline": active_ct,
+        "dependency":  dependency,
+        "done_pct":    round(resolved / total * 100) if total > 0 else 0,
+        "by_state":    by_state,
+    }
+
+
+# ── Generic stacked pivot helper ───────────────────────────────────────────────
+
+def _stacked(df: pd.DataFrame, dim_col: str, top_n: int = 25) -> dict:
+    if dim_col not in df.columns or "sub_category" not in df.columns:
+        return {"rows": [], "sub_categories": []}
+    tmp = df.dropna(subset=[dim_col, "sub_category"])
+    if tmp.empty:
+        return {"rows": [], "sub_categories": []}
+    sub_cats = tmp.groupby("sub_category").size().nlargest(10).index.tolist()
+    tmp2     = tmp[tmp["sub_category"].isin(sub_cats)]
+    pivot    = tmp2.groupby([dim_col, "sub_category"]).size().unstack(fill_value=0)
+    for sc in sub_cats:
+        if sc not in pivot.columns:
+            pivot[sc] = 0
+    pivot["_t"] = pivot[sub_cats].sum(axis=1)
+    pivot = pivot.sort_values("_t", ascending=False).head(top_n)[sub_cats]
+    rows  = [{dim_col: str(dv), **{sc: int(row.get(sc, 0)) for sc in sub_cats}}
+             for dv, row in pivot.iterrows()]
+    return {"rows": rows, "sub_categories": sub_cats}
+
+
+# ── Stacked by area ────────────────────────────────────────────────────────────
+
+@app.get("/api/sessions/{sid}/stacked-by-area")
+def stacked_by_area(
+    sid: str,
+    date_from:    Optional[str] = None,
+    date_to:      Optional[str] = None,
+    team:         Optional[str] = None,
+    sub_category: Optional[str] = None,
+    assigned_to:  Optional[str] = None,
+):
+    df  = _get_session(sid)
+    tmp = _filter_by_range(df, "created_date", date_from, date_to)
+    tmp = _apply_dim_filters(tmp, assigned_to=assigned_to, team=team, sub_category=sub_category)
+    return _stacked(tmp, "area")
+
+
+# ── Stacked by team ────────────────────────────────────────────────────────────
+
+@app.get("/api/sessions/{sid}/stacked-by-team")
+def stacked_by_team(
+    sid: str,
+    date_from:    Optional[str] = None,
+    date_to:      Optional[str] = None,
+    area:         Optional[str] = None,
+    sub_category: Optional[str] = None,
+    assigned_to:  Optional[str] = None,
+):
+    df  = _get_session(sid)
+    tmp = _filter_by_range(df, "created_date", date_from, date_to)
+    tmp = _apply_dim_filters(tmp, assigned_to=assigned_to, area=area, sub_category=sub_category)
+    return _stacked(tmp, "team")
+
+
+# ── Stacked by creator ─────────────────────────────────────────────────────────
+
+@app.get("/api/sessions/{sid}/stacked-by-creator")
+def stacked_by_creator(
+    sid: str,
+    date_from:    Optional[str] = None,
+    date_to:      Optional[str] = None,
+    area:         Optional[str] = None,
+    team:         Optional[str] = None,
+    sub_category: Optional[str] = None,
+    assigned_to:  Optional[str] = None,
+    top_n: int    = Query(20, ge=1, le=50),
+):
+    df  = _get_session(sid)
+    tmp = _filter_by_range(df, "created_date", date_from, date_to)
+    tmp = _apply_dim_filters(tmp, assigned_to=assigned_to, area=area, team=team, sub_category=sub_category)
+    return _stacked(tmp, "ticket_creator", top_n=top_n)
+
+
+# ── Resolved by specialist ─────────────────────────────────────────────────────
+
+@app.get("/api/sessions/{sid}/resolved-by-specialist")
+def resolved_by_specialist(
+    sid: str,
+    date_from:    Optional[str] = None,
+    date_to:      Optional[str] = None,
+    area:         Optional[str] = None,
+    team:         Optional[str] = None,
+    sub_category: Optional[str] = None,
+):
+    df = _get_session(sid)
+    RESOLVED = {"Closed Completed", "Closed Rejected", "Confirmation Completed"}
+    if "state" not in df.columns:
+        return {"rows": [], "sub_categories": []}
+    rdf = df[df["state"].isin(RESOLVED)].copy()
+    rdf = _filter_by_range(rdf, "closed_date", date_from, date_to)
+    rdf = _apply_dim_filters(rdf, area=area, team=team, sub_category=sub_category)
+    return _stacked(rdf, "assigned_to")
+
+
+# ── Monthly stacked (created × sub_category) ───────────────────────────────────
+
+@app.get("/api/sessions/{sid}/monthly-stacked")
+def monthly_stacked(
+    sid: str,
+    date_from:    Optional[str] = None,
+    date_to:      Optional[str] = None,
+    area:         Optional[str] = None,
+    team:         Optional[str] = None,
+    sub_category: Optional[str] = None,
+    assigned_to:  Optional[str] = None,
+):
+    df = _get_session(sid)
+    if "created_date" not in df.columns or "sub_category" not in df.columns:
+        return {"rows": [], "sub_categories": []}
+    tmp = _filter_by_range(df, "created_date", date_from, date_to)
+    tmp = _apply_dim_filters(tmp, assigned_to=assigned_to, area=area, team=team, sub_category=sub_category)
+    tmp = tmp.dropna(subset=["created_date", "sub_category"]).copy()
+    if tmp.empty:
+        return {"rows": [], "sub_categories": []}
+    sub_cats = tmp.groupby("sub_category").size().nlargest(10).index.tolist()
+    tmp2     = tmp[tmp["sub_category"].isin(sub_cats)].copy()
+    tmp2["_m"] = tmp2["created_date"].dt.to_period("M")
+    pivot = tmp2.groupby(["_m", "sub_category"]).size().unstack(fill_value=0)
+    for sc in sub_cats:
+        if sc not in pivot.columns:
+            pivot[sc] = 0
+    pivot = pivot[sub_cats]
+    rows  = [{"month": str(m), "label": m.strftime("%b %Y"), **{sc: int(row.get(sc, 0)) for sc in sub_cats}}
+             for m, row in pivot.sort_index().iterrows()]
+    return {"rows": rows, "sub_categories": sub_cats}
+
+
+# ── Weekly stacked (inflow or outflow × sub_category) ─────────────────────────
+
+@app.get("/api/sessions/{sid}/weekly-stacked")
+def weekly_stacked(
+    sid: str,
+    date_col:     str = Query("created_date", pattern="^(created_date|closed_date)$"),
+    date_from:    Optional[str] = None,
+    date_to:      Optional[str] = None,
+    area:         Optional[str] = None,
+    team:         Optional[str] = None,
+    sub_category: Optional[str] = None,
+    assigned_to:  Optional[str] = None,
+    limit: int    = Query(26, ge=4, le=104),
+):
+    df = _get_session(sid)
+    if date_col not in df.columns or "sub_category" not in df.columns:
+        return {"rows": [], "sub_categories": []}
+    tmp = _filter_by_range(df, date_col, date_from, date_to)
+    tmp = _apply_dim_filters(tmp, assigned_to=assigned_to, area=area, team=team, sub_category=sub_category)
+    tmp = tmp.dropna(subset=[date_col, "sub_category"]).copy()
+    if tmp.empty:
+        return {"rows": [], "sub_categories": []}
+    sub_cats = tmp.groupby("sub_category").size().nlargest(10).index.tolist()
+    tmp2     = tmp[tmp["sub_category"].isin(sub_cats)].copy()
+    tmp2["_w"] = tmp2[date_col].dt.to_period("W").apply(lambda p: p.start_time.date())
+    pivot = tmp2.groupby(["_w", "sub_category"]).size().unstack(fill_value=0)
+    for sc in sub_cats:
+        if sc not in pivot.columns:
+            pivot[sc] = 0
+    pivot = pivot[sub_cats]
+    rows  = [{"week": str(w), "label": _week_label(w), **{sc: int(row.get(sc, 0)) for sc in sub_cats}}
+             for w, row in pivot.sort_index().iterrows()]
+    return {"rows": rows[-limit:], "sub_categories": sub_cats}
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _get_session(sid: str) -> pd.DataFrame:
