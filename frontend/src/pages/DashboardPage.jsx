@@ -94,28 +94,28 @@ export default function DashboardPage({ sessionId, onSessionExpired }) {
 
       {/* ── KPI row ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-        <KpiTile label="Total Tickets"  value={totalAll}      wide />
-        <KpiTile label="Resolved"       value={resolvedCount} color="#059669" />
-        <KpiTile label="Unique Tickets" value={uniqueTickets} />
-        <KpiTile label="In Pipeline"    value={inPipeline}    color="#3b82f6" />
-        <KpiTile label="Dependency"     value={dependency}    color="#f59e0b" />
-        <KpiTile label="Overdue SLA"    value={overdueSla}    color={overdueSla > 0 ? '#ef4444' : '#059669'} />
-        <KpiTile label="Due ≤ 5d"       value={due5}          color={due5 > 0 ? '#f97316' : '#059669'} />
-        <KpiTile label="Avg Age"        value={`${avgAge}d`}  />
+        <KpiTile label="Total Tickets"  value={totalAll}        theme="total"    wide />
+        <KpiTile label="Resolved"       value={resolvedCount}   theme="resolved" />
+        <KpiTile label="Unique Tickets" value={uniqueTickets}   theme="unique"   />
+        <KpiTile label="In Pipeline"    value={inPipeline}      theme="pipeline" />
+        <KpiTile label="Dependency"     value={dependency}      theme="depend"   />
+        <KpiTile label="Overdue SLA"    value={overdueSla}      theme={overdueSla > 0 ? 'overdue' : 'resolved'} />
+        <KpiTile label="Due ≤ 5d"       value={due5}            theme={due5 > 0 ? 'due5' : 'resolved'} />
+        <KpiTile label="Avg Age"        value={`${avgAge}d`}    theme="age"      />
       </div>
 
       {/* ── Row: By Area + By Team ── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <Card title="Tickets by Area" subtitle="All tickets · stacked by sub-category" accent="#1d4ed8">
+        <Card title="Tickets by Area" subtitle="All tickets · stacked by sub-category" accent="#1450f5">
           <StackedBarChart data={byArea} dimKey="area" />
         </Card>
-        <Card title="Tickets by Team" subtitle="All tickets · stacked by sub-category" accent="#d97706">
+        <Card title="Tickets by Team" subtitle="All tickets · stacked by sub-category" accent="#b87d00">
           <StackedBarChart data={byTeam} dimKey="team" />
         </Card>
       </div>
 
       {/* ── Resolved by Specialist ── */}
-      <Card title="Resolved by Specialist" subtitle="Closed tickets per team member · stacked by sub-category" accent="#059669">
+      <Card title="Resolved by Specialist" subtitle="Closed tickets per team member · stacked by sub-category" accent="#1e8a5e">
         <StackedBarChart
           data={{
             ...bySpecialist,
@@ -126,27 +126,27 @@ export default function DashboardPage({ sessionId, onSessionExpired }) {
       </Card>
 
       {/* ── Tickets by Requestor ── */}
-      <Card title="Tickets by Requestor" subtitle="Top 20 ticket creators · stacked by sub-category" accent="#7c3aed">
+      <Card title="Tickets by Requestor" subtitle="Top 20 ticket creators · stacked by sub-category" accent="#c0305a">
         <StackedBarChart data={byCreator} dimKey="ticket_creator" />
       </Card>
 
       {/* ── Monthly Inflow Trend ── */}
-      <Card title="Ticket Inflow Trend — Month Wise" subtitle="All ticket creation over time · stacked by sub-category" accent="#0891b2">
+      <Card title="Ticket Inflow Trend — Month Wise" subtitle="All ticket creation over time · stacked by sub-category" accent="#0077a8">
         <StackedColumnChart data={monthly} xKey="label" height={320} />
       </Card>
 
       {/* ── Weekly Inflow + Outflow ── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <Card title="Weekly Ticket Inflow" subtitle="Created tickets · last 26 weeks · stacked by sub-category" accent="#6366f1">
+        <Card title="Weekly Ticket Inflow" subtitle="Created tickets · last 26 weeks · stacked by sub-category" accent="#1450f5">
           <StackedColumnChart data={inflow} xKey="label" height={300} />
         </Card>
-        <Card title="Weekly Ticket Outflow" subtitle="Closed tickets · last 26 weeks · stacked by sub-category" accent="#059669">
+        <Card title="Weekly Ticket Outflow" subtitle="Closed tickets · last 26 weeks · stacked by sub-category" accent="#1e8a5e">
           <StackedColumnChart data={outflow} xKey="label" height={300} />
         </Card>
       </div>
 
       {/* ── Backlog Age ── */}
-      <Card title="Days Since Ticket Created" subtitle="Age distribution of active (open) tickets" accent="#ef4444">
+      <Card title="Days Since Ticket Created" subtitle="Age distribution of active (open) tickets" accent="#c0305a">
         <BacklogAgeChart data={backlogAge} />
       </Card>
 
@@ -156,15 +156,15 @@ export default function DashboardPage({ sessionId, onSessionExpired }) {
 
 // ── Card shell ─────────────────────────────────────────────────────────────────
 
-function Card({ title, subtitle, accent = '#6366f1', children }) {
+function Card({ title, subtitle, accent = '#1450f5', children }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="h-[3px]" style={{ backgroundColor: accent }} />
-      <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+      <div className="px-5 py-3.5 border-b border-gray-100" style={{ backgroundColor: '#faf9f7' }}>
         <div className="flex items-center gap-2.5">
           <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: accent }} />
           <div>
-            <h3 className="text-sm font-semibold text-gray-800 leading-tight">{title}</h3>
+            <h3 className="text-sm font-semibold leading-tight" style={{ color: '#141414' }}>{title}</h3>
             {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
           </div>
         </div>
@@ -176,11 +176,26 @@ function Card({ title, subtitle, accent = '#6366f1', children }) {
 
 // ── KPI tile ───────────────────────────────────────────────────────────────────
 
-function KpiTile({ label, value, color = '#374151', wide = false }) {
+const TILE_THEMES = {
+  total:    { bg: '#d2f5ff', text: '#141414' },
+  resolved: { bg: '#aae1c8', text: '#141414' },
+  unique:   { bg: '#ffffff', text: '#141414' },
+  pipeline: { bg: '#d2f5ff', text: '#1450f5' },
+  depend:   { bg: '#ffe141', text: '#141414' },
+  overdue:  { bg: '#ffcdd7', text: '#141414' },
+  due5:     { bg: '#ffe141', text: '#141414' },
+  age:      { bg: '#f3eee6', text: '#141414' },
+}
+
+function KpiTile({ label, value, theme = 'unique', wide = false }) {
+  const t = TILE_THEMES[theme] ?? TILE_THEMES.unique
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col gap-1 ${wide ? 'col-span-2 sm:col-span-2' : ''}`}>
-      <p className="text-xs text-gray-400 font-medium uppercase tracking-wide leading-tight">{label}</p>
-      <p className="text-2xl font-bold tracking-tight" style={{ color }}>{value ?? '—'}</p>
+    <div
+      className={`rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col gap-1 ${wide ? 'col-span-2' : ''}`}
+      style={{ backgroundColor: t.bg }}
+    >
+      <p className="text-xs font-medium uppercase tracking-wide leading-tight text-gray-500">{label}</p>
+      <p className="text-2xl font-bold tracking-tight" style={{ color: t.text }}>{value ?? '—'}</p>
     </div>
   )
 }

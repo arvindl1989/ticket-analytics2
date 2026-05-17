@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { getPriority, getExportUrl } from '../api'
 
-const PRIORITY_STYLES = {
-  Overdue:  'bg-red-100 text-red-800',
-  Critical: 'bg-orange-100 text-orange-800',
-  High:     'bg-amber-100 text-amber-800',
-  Medium:   'bg-yellow-100 text-yellow-700',
-  Normal:   'bg-gray-100 text-gray-600',
-  'N/A':    'bg-gray-50 text-gray-400',
+// Inline style objects — avoid Tailwind purge issues and use brand palette
+const PRIORITY_BADGE = {
+  Overdue:  { backgroundColor: '#ffcdd7', color: '#141414' },
+  Critical: { backgroundColor: '#ffe141', color: '#141414' },
+  High:     { backgroundColor: '#d2f5ff', color: '#141414' },
+  Medium:   { backgroundColor: '#aae1c8', color: '#141414' },
+  Normal:   { backgroundColor: '#f3f4f6', color: '#6b7280' },
+  'N/A':    { backgroundColor: '#f9fafb', color: '#9ca3af' },
 }
 
 const FILTER_KEYS = {
@@ -24,10 +25,10 @@ function fmtDate(val) {
 }
 
 function DaysCell({ val }) {
-  if (val === null || val === undefined) return <span className="text-gray-300">—</span>
-  if (val < 0)  return <span className="font-semibold text-red-600">{val}d</span>
-  if (val <= 5) return <span className="font-semibold text-amber-600">+{val}d</span>
-  return <span className="text-gray-600">+{val}d</span>
+  if (val === null || val === undefined) return <span style={{ color: '#d1d5db' }}>—</span>
+  if (val < 0)  return <span className="badge font-semibold" style={{ backgroundColor: '#ffcdd7', color: '#141414' }}>{val}d</span>
+  if (val <= 5) return <span className="badge font-semibold" style={{ backgroundColor: '#ffe141', color: '#141414' }}>+{val}d</span>
+  return <span style={{ color: '#6b7280' }}>+{val}d</span>
 }
 
 // Defined outside the parent so React never remounts it on re-render
@@ -61,7 +62,8 @@ function CopyCell({ value }) {
     <button
       onClick={handleCopy}
       title="Click to copy"
-      className="font-mono text-xs text-indigo-700 hover:text-indigo-900 hover:underline cursor-pointer focus:outline-none"
+      className="font-mono text-xs hover:underline cursor-pointer focus:outline-none"
+      style={{ color: '#1450f5' }}
     >
       {copied ? <span className="text-green-600 font-semibold">Copied!</span> : (value ?? '—')}
     </button>
@@ -197,8 +199,11 @@ export default function PriorityTracker({ sessionId, onSessionExpired, overview 
                       <th
                         key={col.key}
                         onClick={() => handleHeaderClick(col)}
-                        className={`text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider whitespace-nowrap cursor-pointer select-none transition-colors
-                          ${active ? 'text-indigo-600 bg-indigo-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                        className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider whitespace-nowrap cursor-pointer select-none transition-colors"
+                        style={active
+                          ? { color: '#1450f5', backgroundColor: '#eef3ff' }
+                          : { color: '#6b7280' }
+                        }
                       >
                         {col.label}
                         <span className="ml-1 inline-block w-3 text-center">
@@ -213,7 +218,7 @@ export default function PriorityTracker({ sessionId, onSessionExpired, overview 
                 {visible.map((t, i) => (
                   <tr key={t.ticket_number ?? i} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`badge ${PRIORITY_STYLES[t.priority_label] ?? PRIORITY_STYLES.Normal}`}>
+                      <span className="badge" style={PRIORITY_BADGE[t.priority_label] ?? PRIORITY_BADGE.Normal}>
                         {t.priority_label}
                       </span>
                     </td>
@@ -227,7 +232,13 @@ export default function PriorityTracker({ sessionId, onSessionExpired, overview 
                     <td className="px-4 py-3 whitespace-nowrap text-gray-500">{t.team ?? '—'}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-600">{t.sub_category ?? '—'}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`badge ${t.state === 'Pending Confirmation' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                      <span
+                        className="badge"
+                        style={t.state === 'Pending Confirmation'
+                          ? { backgroundColor: '#d2f5ff', color: '#141414' }
+                          : { backgroundColor: '#f3eee6', color: '#6b7280' }
+                        }
+                      >
                         {t.state ?? '—'}
                       </span>
                     </td>

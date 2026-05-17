@@ -24,17 +24,17 @@ import ChartFilters        from '../components/ChartFilters'
 // Names excluded from team performance view
 const EXCLUDED_MEMBERS = new Set(['Dheera Sameera', 'Pooja V', 'Suresh Karthik'])
 
-// Section accent colours — hex avoids Tailwind purge issues with dynamic class names
+// Section accent colours — brand palette
 const COLOR = {
-  indigo: '#6366f1',
-  blue:   '#3b82f6',
-  green:  '#10b981',
-  amber:  '#f59e0b',
-  red:    '#ef4444',
-  violet: '#8b5cf6',
-  pink:   '#ec4899',
-  teal:   '#14b8a6',
-  slate:  '#cbd5e1',
+  indigo: '#1450f5',
+  blue:   '#0077a8',
+  green:  '#1e8a5e',
+  amber:  '#b87d00',
+  red:    '#c0305a',
+  violet: '#7c3aed',
+  pink:   '#c0305a',
+  teal:   '#0f766e',
+  slate:  '#94a3b8',
 }
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
@@ -340,22 +340,17 @@ export default function AnalyticsPage({ sessionId, onSessionExpired }) {
 function Section({ color, title, subtitle, controls, children }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* Coloured top strip */}
       <div className="h-[3px]" style={{ backgroundColor: color }} />
-
-      {/* Header */}
-      <div className="px-6 py-4 flex flex-wrap items-center gap-3 border-b border-gray-100 bg-gray-50/60">
+      <div className="px-6 py-4 flex flex-wrap items-center gap-3 border-b border-gray-100" style={{ backgroundColor: '#faf9f7' }}>
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-gray-800 leading-tight">{title}</h3>
+            <h3 className="text-sm font-semibold leading-tight" style={{ color: '#141414' }}>{title}</h3>
             {subtitle && <p className="text-xs text-gray-400 mt-0.5 truncate">{subtitle}</p>}
           </div>
         </div>
         {controls && <div className="flex-shrink-0">{controls}</div>}
       </div>
-
-      {/* Body */}
       <div className="p-6">{children}</div>
     </div>
   )
@@ -364,10 +359,10 @@ function Section({ color, title, subtitle, controls, children }) {
 // ── KPI card ───────────────────────────────────────────────────────────────────
 
 const TIER = {
-  good:    { bar: '#10b981', val: '#065f46', bg: '#f0fdf4', border: '#a7f3d0' },
-  warn:    { bar: '#f59e0b', val: '#78350f', bg: '#fffbeb', border: '#fde68a' },
-  bad:     { bar: '#ef4444', val: '#7f1d1d', bg: '#fef2f2', border: '#fecaca' },
-  neutral: { bar: '#6366f1', val: '#312e81', bg: '#eef2ff', border: '#c7d2fe' },
+  good:    { bar: '#1e8a5e', val: '#141414', bg: '#edfff6', border: '#aae1c8' },
+  warn:    { bar: '#b87d00', val: '#141414', bg: '#fffde8', border: '#ffe141' },
+  bad:     { bar: '#c0305a', val: '#141414', bg: '#fff0f4', border: '#ffcdd7' },
+  neutral: { bar: '#1450f5', val: '#1450f5', bg: '#eef3ff', border: '#d2f5ff' },
 }
 
 function KpiCard({ label, value, detail, tier = 'neutral', icon }) {
@@ -400,8 +395,11 @@ function TogglePill({ options, value, onChange }) {
         <button
           key={v}
           onClick={() => onChange(v)}
-          className={`px-3 py-1 text-xs font-medium transition-colors
-            ${value === v ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
+          className="px-3 py-1 text-xs font-medium transition-colors"
+          style={value === v
+            ? { backgroundColor: '#1450f5', color: '#ffffff' }
+            : { color: '#6b7280' }
+          }
         >
           {label}
         </button>
