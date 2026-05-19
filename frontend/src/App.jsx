@@ -1,14 +1,16 @@
 import { useState, useCallback } from 'react'
-import UploadZone     from './components/UploadZone'
-import DashboardPage  from './pages/DashboardPage'
-import PriorityPage   from './pages/PriorityPage'
-import AnalyticsPage  from './pages/AnalyticsPage'
-import SlaConfigModal from './components/SlaConfigModal'
+import UploadZone        from './components/UploadZone'
+import DashboardPage     from './pages/DashboardPage'
+import PriorityPage      from './pages/PriorityPage'
+import AnalyticsPage     from './pages/AnalyticsPage'
+import UserActivityPage  from './pages/UserActivityPage'
+import SlaConfigModal    from './components/SlaConfigModal'
 
 const TABS = [
-  { id: 'dashboard', label: 'Dashboard',        icon: <GridIcon /> },
-  { id: 'priority',  label: 'Priority Tracker',  icon: <FlagIcon /> },
-  { id: 'analytics', label: 'Analytics',         icon: <ChartIcon /> },
+  { id: 'dashboard',     label: 'Dashboard',        icon: <GridIcon /> },
+  { id: 'priority',      label: 'Priority Tracker',  icon: <FlagIcon /> },
+  { id: 'analytics',     label: 'Analytics',         icon: <ChartIcon /> },
+  { id: 'user-activity', label: 'User Activity',     icon: <UsersIcon /> },
 ]
 
 export default function App() {
@@ -90,9 +92,10 @@ export default function App() {
 
       <main style={{ flex: 1, padding: '24px', paddingBottom: 48 }}>
         <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-          {activeTab === 'dashboard' && <DashboardPage sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
-          {activeTab === 'priority'  && <PriorityPage  sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
-          {activeTab === 'analytics' && <AnalyticsPage sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
+          {activeTab === 'dashboard'     && <DashboardPage    sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
+          {activeTab === 'priority'      && <PriorityPage     sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
+          {activeTab === 'analytics'     && <AnalyticsPage    sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
+          {activeTab === 'user-activity' && <UserActivityPage sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
         </div>
       </main>
 
@@ -204,6 +207,16 @@ function ChartIcon() {
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
       <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
+    </svg>
+  )
+}
+function UsersIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
     </svg>
   )
 }

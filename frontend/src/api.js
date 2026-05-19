@@ -162,6 +162,11 @@ export async function getWeeklyStacked(sid, dateCol = 'created_date', dateFrom, 
   return data
 }
 
+export async function getUserActivity(sid) {
+  const { data } = await client.get(`/sessions/${sid}/user-activity`)
+  return data
+}
+
 export async function getSlaRules() {
   const { data } = await client.get('/sla-rules')
   return data
