@@ -681,6 +681,57 @@ def backlog_age(sid: str):
     return result
 
 
+# ── User ticket activity ───────────────────────────────────────────────────────
+
+@app.get("/api/sessions/{sid}/user-activity")
+def user_activity(sid: str):
+    df = _get_session(sid)
+    if "ticket_creator" not in df.columns or "created_date" not in df.columns:
+        return []
+
+    today = date.today()
+    tmp = df.dropna(subset=["ticket_creator", "created_date"]).copy()
+    if tmp.empty:
+        return []
+
+    result = []
+    for creator, grp in tmp.groupby("ticket_creator"):
+        last_ts = grp["created_date"].max()
+        last_d = last_ts.date() if isinstance(last_ts, (pd.Timestamp, datetime)) else last_ts
+        days_since = (today - last_d).days
+
+        team = None
+        area = None
+        if "team" in grp.columns:
+            tc = grp["team"].dropna().value_counts()
+            if len(tc):
+                team = tc.index[0]
+        if "area" in grp.columns:
+            ac = grp["area"].dropna().value_counts()
+            if len(ac):
+                area = ac.index[0]
+
+        if days_since < 28:
+            tier = "Active"
+        elif days_since <= 56:
+            tier = "At Risk"
+        else:
+            tier = "Remove Access"
+
+        result.append({
+            "creator": str(creator),
+            "team": team,
+            "area": area,
+            "total_tickets": int(len(grp)),
+            "last_ticket_date": last_ts.isoformat() if pd.notna(last_ts) else None,
+            "days_since_last": int(days_since),
+            "remove_access": days_since > 56,
+            "engagement_tier": tier,
+        })
+
+    return sorted(result, key=lambda x: x["days_since_last"], reverse=True)
+
+
 # ── SLA config ─────────────────────────────────────────────────────────────────
 
 @app.get("/api/sla-rules")
