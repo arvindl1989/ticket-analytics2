@@ -13,6 +13,12 @@ from datetime import datetime, date, timedelta
 
 app = FastAPI(title="Ticket Analytics API", version="1.0.0")
 
+
+@app.get("/healthz")
+def health():
+    return {"status": "ok"}
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
