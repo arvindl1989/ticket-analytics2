@@ -5,6 +5,25 @@ import {
 } from 'recharts'
 import { getUserActivity } from '../api'
 
+function DateInput({ label, value, onChange }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>{label}</span>
+      <input
+        type="date"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        style={{
+          height: 34, border: '1px solid #e5e7eb', borderRadius: 8,
+          fontSize: 12, color: '#374151', padding: '0 8px',
+          background: '#fff', fontFamily: 'Inter, sans-serif',
+          cursor: 'pointer', outline: 'none',
+        }}
+      />
+    </div>
+  )
+}
+
 const TIER_CONFIG = {
   Active:          { color: '#1e8a5e', bg: '#ecfdf5', border: '#6ee7b7' },
   'At Risk':       { color: '#b87d00', bg: '#fffbeb', border: '#fcd34d' },
@@ -95,6 +114,8 @@ export default function UserActivityPage({ sessionId, onSessionExpired }) {
   const [teamFilter, setTeamFilter] = useState('')
   const [areaFilter, setAreaFilter] = useState('')
   const [tierFilter, setTierFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo,   setDateTo]   = useState('')
   const [sort, setSort]         = useState({ key: 'days_since_last', dir: 'desc' })
 
   useEffect(() => {
@@ -114,6 +135,8 @@ export default function UserActivityPage({ sessionId, onSessionExpired }) {
     if (teamFilter) rows = rows.filter(r => r.team === teamFilter)
     if (areaFilter) rows = rows.filter(r => r.area === areaFilter)
     if (tierFilter) rows = rows.filter(r => r.engagement_tier === tierFilter)
+    if (dateFrom)   rows = rows.filter(r => r.last_ticket_date && r.last_ticket_date >= dateFrom)
+    if (dateTo)     rows = rows.filter(r => r.last_ticket_date && r.last_ticket_date <= dateTo + 'T23:59:59')
     return [...rows].sort((a, b) => {
       const av = a[sort.key] ?? ''
       const bv = b[sort.key] ?? ''
@@ -246,9 +269,9 @@ export default function UserActivityPage({ sessionId, onSessionExpired }) {
       {/* Filters */}
       <div style={{
         background: '#fff', border: '1px solid #e5e8ef', borderRadius: 12,
-        padding: '14px 18px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center',
+        padding: '14px 18px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end',
       }}>
-        <div style={{ position: 'relative', flexShrink: 0 }}>
+        <div style={{ position: 'relative', flexShrink: 0, alignSelf: 'flex-end' }}>
           <svg style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
             width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -261,45 +284,52 @@ export default function UserActivityPage({ sessionId, onSessionExpired }) {
             style={{
               paddingLeft: 30, paddingRight: 10, height: 34, border: '1px solid #e5e7eb',
               borderRadius: 8, fontSize: 13, color: '#374151', outline: 'none',
-              fontFamily: 'Inter, sans-serif', width: 200,
+              fontFamily: 'Inter, sans-serif', width: 180,
             }}
           />
         </div>
+
+        <DateInput label="Last ticket from" value={dateFrom} onChange={setDateFrom} />
+        <DateInput label="Last ticket to"   value={dateTo}   onChange={setDateTo} />
+
+        <div style={{ width: 1, height: 34, background: '#e5e7eb', alignSelf: 'flex-end' }} />
 
         {[
           { label: 'All Teams',  value: teamFilter, set: setTeamFilter, options: teams },
           { label: 'All Areas',  value: areaFilter, set: setAreaFilter, options: areas },
           { label: 'All Tiers',  value: tierFilter, set: setTierFilter, options: ['Active', 'At Risk', 'Remove Access'] },
         ].map(({ label, value, set, options }) => (
-          <select
-            key={label}
-            value={value}
-            onChange={e => set(e.target.value)}
-            style={{
-              height: 34, border: '1px solid #e5e7eb', borderRadius: 8,
-              fontSize: 13, color: '#374151', padding: '0 10px',
-              background: '#fff', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-              minWidth: 130,
-            }}
-          >
-            <option value="">{label}</option>
-            {options.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
+          <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>{label.replace('All ', '')}</span>
+            <select
+              value={value}
+              onChange={e => set(e.target.value)}
+              style={{
+                height: 34, border: '1px solid #e5e7eb', borderRadius: 8,
+                fontSize: 13, color: '#374151', padding: '0 10px',
+                background: '#fff', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                minWidth: 130,
+              }}
+            >
+              <option value="">{label}</option>
+              {options.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
         ))}
 
-        {(search || teamFilter || areaFilter || tierFilter) && (
+        {(search || teamFilter || areaFilter || tierFilter || dateFrom || dateTo) && (
           <button
-            onClick={() => { setSearch(''); setTeamFilter(''); setAreaFilter(''); setTierFilter('') }}
+            onClick={() => { setSearch(''); setTeamFilter(''); setAreaFilter(''); setTierFilter(''); setDateFrom(''); setDateTo('') }}
             style={{
               background: 'none', border: '1px solid #e5e7eb', borderRadius: 8,
               fontSize: 12, color: '#6b7280', cursor: 'pointer', padding: '0 10px', height: 34,
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'Inter, sans-serif', alignSelf: 'flex-end',
             }}
           >
-            Clear
+            Clear all
           </button>
         )}
-        <span style={{ marginLeft: 'auto', fontSize: 12, color: '#9ca3af' }}>
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: '#9ca3af', alignSelf: 'flex-end' }}>
           {filtered.length} of {data.length} users
         </span>
       </div>

@@ -167,6 +167,21 @@ export async function getUserActivity(sid) {
   return data
 }
 
+export async function getBandwidth(sid) {
+  const { data } = await client.get(`/sessions/${sid}/bandwidth`)
+  return data
+}
+
+export async function getBandwidthRates() {
+  const { data } = await client.get('/bandwidth-rates')
+  return data
+}
+
+export async function updateBandwidthRates(rates) {
+  const { data } = await client.put('/bandwidth-rates', rates)
+  return data
+}
+
 export async function getSlaRules() {
   const { data } = await client.get('/sla-rules')
   return data

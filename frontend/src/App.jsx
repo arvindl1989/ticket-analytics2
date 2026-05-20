@@ -4,6 +4,7 @@ import DashboardPage     from './pages/DashboardPage'
 import PriorityPage      from './pages/PriorityPage'
 import AnalyticsPage     from './pages/AnalyticsPage'
 import UserActivityPage  from './pages/UserActivityPage'
+import BandwidthPage     from './pages/BandwidthPage'
 import SlaConfigModal    from './components/SlaConfigModal'
 
 const TABS = [
@@ -11,6 +12,7 @@ const TABS = [
   { id: 'priority',      label: 'Priority Tracker',  icon: <FlagIcon /> },
   { id: 'analytics',     label: 'Analytics',         icon: <ChartIcon /> },
   { id: 'user-activity', label: 'User Activity',     icon: <UsersIcon /> },
+  { id: 'bandwidth',     label: 'Bandwidth',         icon: <BoltIcon /> },
 ]
 
 export default function App() {
@@ -96,6 +98,7 @@ export default function App() {
           {activeTab === 'priority'      && <PriorityPage     sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
           {activeTab === 'analytics'     && <AnalyticsPage    sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
           {activeTab === 'user-activity' && <UserActivityPage sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
+          {activeTab === 'bandwidth'     && <BandwidthPage    sessionId={sessionId} onSessionExpired={handleSessionExpired} />}
         </div>
       </main>
 
@@ -217,6 +220,13 @@ function UsersIcon() {
       <circle cx="9" cy="7" r="4"/>
       <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
       <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+  )
+}
+function BoltIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
     </svg>
   )
 }

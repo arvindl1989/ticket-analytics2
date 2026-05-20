@@ -25,6 +25,18 @@ sessions: dict[str, pd.DataFrame] = {}
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
+BANDWIDTH_RATES: dict[str, float] = {
+    "Website Content Management":          1.6,
+    "Content Production – Graphic Design": 1.3,
+    "Demand Creation – Global":            0.4,
+    "Email – Local":                       1.1,
+    "Retention – Activations":             0.4,
+}
+
+BANDWIDTH_HOURS_PER_DAY  = 8
+BANDWIDTH_DAYS_PER_WEEK  = 5
+BANDWIDTH_WEEKLY_CAPACITY = BANDWIDTH_HOURS_PER_DAY * BANDWIDTH_DAYS_PER_WEEK  # 40 h
+
 # Keys match exact Sub-Category values from the Excel (em-dash –)
 SLA_RULES: dict[str, int] = {
     "Website Content Management": 10,
@@ -679,6 +691,85 @@ def backlog_age(sid: str):
             count = int(((active["ticket_age"] >= lo) & (active["ticket_age"] <= hi)).sum())
         result.append({"label": label, "count": count, "color": color})
     return result
+
+
+# ── Bandwidth config ──────────────────────────────────────────────────────────
+
+@app.get("/api/bandwidth-rates")
+def get_bandwidth_rates():
+    return BANDWIDTH_RATES
+
+@app.put("/api/bandwidth-rates")
+def update_bandwidth_rates(rates: dict[str, float]):
+    BANDWIDTH_RATES.clear()
+    BANDWIDTH_RATES.update(rates)
+    return {"message": "Bandwidth rates updated", "rates": BANDWIDTH_RATES}
+
+
+# ── Bandwidth tracker ──────────────────────────────────────────────────────────
+
+@app.get("/api/sessions/{sid}/bandwidth")
+def bandwidth_tracker(sid: str):
+    df = _get_session(sid)
+    if "assigned_to" not in df.columns:
+        return {"members": [], "rates": BANDWIDTH_RATES, "weekly_capacity": BANDWIDTH_WEEKLY_CAPACITY}
+
+    active = df[df["is_active"]].copy()
+    hours_per_ticket = {sc: BANDWIDTH_HOURS_PER_DAY / rate for sc, rate in BANDWIDTH_RATES.items()}
+
+    members = []
+    for person in sorted(active["assigned_to"].dropna().unique()):
+        pdf = active[active["assigned_to"] == person]
+
+        breakdown: dict[str, int] = {}
+        committed = 0.0
+        for sc, hpt in hours_per_ticket.items():
+            cnt = int((pdf["sub_category"] == sc).sum())
+            if cnt:
+                breakdown[sc] = cnt
+                committed += cnt * hpt
+
+        tracked_count   = sum(breakdown.values())
+        untracked_count = int(len(pdf)) - tracked_count
+        load_pct        = round(committed / BANDWIDTH_WEEKLY_CAPACITY * 100, 1)
+        available_h     = max(0.0, round(BANDWIDTH_WEEKLY_CAPACITY - committed, 1))
+
+        # Additional tickets capacity per sub-category
+        capacity_by_type = {sc: round(available_h / hpt, 1) for sc, hpt in hours_per_ticket.items()}
+
+        # Overall "more tickets" estimate using average hours/ticket of current mix
+        avg_hpt = (committed / tracked_count) if tracked_count else (BANDWIDTH_HOURS_PER_DAY / 1.0)
+        additional_total = round(available_h / avg_hpt, 1) if avg_hpt else 0.0
+
+        if load_pct < 60:
+            status = "Available"
+        elif load_pct <= 85:
+            status = "Busy"
+        else:
+            status = "Overloaded"
+
+        members.append({
+            "assigned_to":      person,
+            "active_tickets":   int(len(pdf)),
+            "tracked_tickets":  tracked_count,
+            "untracked_tickets": untracked_count,
+            "ticket_breakdown": breakdown,
+            "committed_hours":  round(committed, 1),
+            "available_hours":  available_h,
+            "load_pct":         load_pct,
+            "additional_total": additional_total,
+            "capacity_by_type": capacity_by_type,
+            "status":           status,
+        })
+
+    members.sort(key=lambda x: x["load_pct"], reverse=True)
+
+    return {
+        "members":          members,
+        "rates":            BANDWIDTH_RATES,
+        "hours_per_ticket": {sc: round(h, 2) for sc, h in hours_per_ticket.items()},
+        "weekly_capacity":  BANDWIDTH_WEEKLY_CAPACITY,
+    }
 
 
 # ── User ticket activity ───────────────────────────────────────────────────────
