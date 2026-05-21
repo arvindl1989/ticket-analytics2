@@ -30,17 +30,17 @@ sessions: dict[str, pd.DataFrame] = {}
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
+# Days of effort required to complete one ticket of each sub-category.
+# Edit via PUT /api/bandwidth-rates at runtime.
 BANDWIDTH_RATES: dict[str, float] = {
-    "Website Content Management":          1.6,
-    "Content Production – Graphic Design": 1.3,
-    "Demand Creation – Global":            0.4,
-    "Email – Local":                       1.1,
-    "Retention – Activations":             0.4,
+    "Website Content Management":          5.0,
+    "Content Production – Graphic Design": 6.0,
+    "Demand Creation – Global":           20.0,
+    "Email – Local":                       7.0,
+    "Retention – Activations":            20.0,
 }
 
-BANDWIDTH_HOURS_PER_DAY  = 8
-BANDWIDTH_DAYS_PER_WEEK  = 5
-BANDWIDTH_WEEKLY_CAPACITY = BANDWIDTH_HOURS_PER_DAY * BANDWIDTH_DAYS_PER_WEEK  # 40 h
+BANDWIDTH_DAYS_PER_WEEK = 5   # standard working week used as a reference baseline
 
 # Keys match exact Sub-Category values from the Excel (em-dash –)
 SLA_RULES: dict[str, int] = {
@@ -96,6 +96,20 @@ def calendar_days_to(target, today: date) -> Optional[int]:
     try:
         t = target.date() if isinstance(target, (pd.Timestamp, datetime)) else target
         return (t - today).days
+    except Exception:
+        return None
+
+
+def working_days_remaining(sla_date, today: date) -> Optional[int]:
+    """Working days from today (inclusive) to sla_date (inclusive).
+    Returns a negative number if the SLA is already overdue."""
+    if sla_date is None or (isinstance(sla_date, float) and np.isnan(sla_date)):
+        return None
+    try:
+        t = sla_date.date() if isinstance(sla_date, (pd.Timestamp, datetime)) else sla_date
+        # np.busday_count(d1, d2) counts Mon-Fri days in [d1, d2)
+        # Adding timedelta(1) makes it inclusive of t
+        return int(np.busday_count(today.isoformat(), (t + timedelta(days=1)).isoformat()))
     except Exception:
         return None
 
@@ -717,63 +731,124 @@ def update_bandwidth_rates(rates: dict[str, float]):
 def bandwidth_tracker(sid: str):
     df = _get_session(sid)
     if "assigned_to" not in df.columns:
-        return {"members": [], "rates": BANDWIDTH_RATES, "weekly_capacity": BANDWIDTH_WEEKLY_CAPACITY}
+        return {
+            "members": [],
+            "rates": BANDWIDTH_RATES,
+            "weekly_capacity_days": BANDWIDTH_DAYS_PER_WEEK,
+        }
 
+    today  = date.today()
     active = df[df["is_active"]].copy()
-    hours_per_ticket = {sc: BANDWIDTH_HOURS_PER_DAY / rate for sc, rate in BANDWIDTH_RATES.items()}
 
     members = []
     for person in sorted(active["assigned_to"].dropna().unique()):
         pdf = active[active["assigned_to"] == person]
 
-        breakdown: dict[str, int] = {}
-        committed = 0.0
-        for sc, hpt in hours_per_ticket.items():
-            cnt = int((pdf["sub_category"] == sc).sum())
-            if cnt:
-                breakdown[sc] = cnt
-                committed += cnt * hpt
+        breakdown:         dict[str, int]  = {}
+        sla_details:       list[dict]      = []
+        committed_days     = 0.0
+        total_pressure     = 0.0   # Σ (effort / sla_window) — >1.0 means overloaded vs SLAs
+        sla_breach_total   = 0
+        sla_at_risk_total  = 0
+        sla_safe_total     = 0
+
+        for sc, dpt in BANDWIDTH_RATES.items():
+            sc_rows = pdf[pdf["sub_category"] == sc]
+            cnt = len(sc_rows)
+            if not cnt:
+                continue
+
+            breakdown[sc]   = cnt
+            committed_days += cnt * dpt
+
+            sc_wdays: list[int] = []
+            sc_breach = sc_at_risk = 0
+
+            for _, row in sc_rows.iterrows():
+                wdays = working_days_remaining(row.get("sla_due_date"), today)
+                if wdays is not None:
+                    sc_wdays.append(wdays)
+                    if wdays <= 0 or wdays < dpt:
+                        # Overdue OR impossible to finish before SLA deadline
+                        sc_breach += 1
+                        total_pressure += dpt  # full effort still needed, window gone
+                    elif wdays < dpt * 1.5:
+                        # Tight: deadline is within 50 % buffer of effort estimate
+                        sc_at_risk += 1
+                        total_pressure += dpt / wdays
+                    else:
+                        total_pressure += dpt / wdays
+                else:
+                    # No SLA date → fall back to weekly window as neutral pressure
+                    total_pressure += dpt / BANDWIDTH_DAYS_PER_WEEK
+
+            sc_safe = cnt - sc_breach - sc_at_risk
+            sla_breach_total  += sc_breach
+            sla_at_risk_total += sc_at_risk
+            sla_safe_total    += sc_safe
+
+            sla_details.append({
+                "sub_category":           sc,
+                "count":                  cnt,
+                "days_per_ticket":        round(dpt, 1),
+                "avg_working_days_to_sla": round(sum(sc_wdays) / len(sc_wdays), 1) if sc_wdays else None,
+                "min_working_days_to_sla": min(sc_wdays) if sc_wdays else None,
+                "sla_breaching":          sc_breach,
+                "sla_at_risk":            sc_at_risk,
+                "sla_safe":               sc_safe,
+            })
 
         tracked_count   = sum(breakdown.values())
         untracked_count = int(len(pdf)) - tracked_count
-        load_pct        = round(committed / BANDWIDTH_WEEKLY_CAPACITY * 100, 1)
-        available_h     = max(0.0, round(BANDWIDTH_WEEKLY_CAPACITY - committed, 1))
 
-        # Additional tickets capacity per sub-category
-        capacity_by_type = {sc: round(available_h / hpt, 1) for sc, hpt in hours_per_ticket.items()}
+        # SLA pressure %: 100 % = just-manageable, >100 % = physically can't meet all SLAs
+        sla_pressure_pct = round(total_pressure * 100, 1) if tracked_count else 0.0
 
-        # Overall "more tickets" estimate using average hours/ticket of current mix
-        avg_hpt = (committed / tracked_count) if tracked_count else (BANDWIDTH_HOURS_PER_DAY / 1.0)
-        additional_total = round(available_h / avg_hpt, 1) if avg_hpt else 0.0
+        # Weekly load % — how many reference weeks of work are queued up
+        weekly_load_pct  = round(committed_days / BANDWIDTH_DAYS_PER_WEEK * 100, 1)
+        available_days   = max(0.0, round(BANDWIDTH_DAYS_PER_WEEK - committed_days, 1))
 
-        if load_pct < 60:
-            status = "Available"
-        elif load_pct <= 85:
+        # How many extra tickets would fit in the remaining weekly headroom
+        capacity_by_type = {
+            sc: round(available_days / dpt, 1)
+            for sc, dpt in BANDWIDTH_RATES.items()
+            if dpt > 0
+        }
+
+        # Status is primarily SLA-driven
+        if sla_breach_total > 0 or sla_pressure_pct >= 100:
+            status = "Overloaded"
+        elif sla_at_risk_total > 0 or sla_pressure_pct >= 70 or weekly_load_pct >= 85:
             status = "Busy"
         else:
-            status = "Overloaded"
+            status = "Available"
 
         members.append({
-            "assigned_to":      person,
-            "active_tickets":   int(len(pdf)),
-            "tracked_tickets":  tracked_count,
-            "untracked_tickets": untracked_count,
-            "ticket_breakdown": breakdown,
-            "committed_hours":  round(committed, 1),
-            "available_hours":  available_h,
-            "load_pct":         load_pct,
-            "additional_total": additional_total,
-            "capacity_by_type": capacity_by_type,
-            "status":           status,
+            "assigned_to":        person,
+            "active_tickets":     int(len(pdf)),
+            "tracked_tickets":    tracked_count,
+            "untracked_tickets":  untracked_count,
+            "ticket_breakdown":   breakdown,
+            "committed_days":     round(committed_days, 1),
+            "available_days":     available_days,
+            "weekly_load_pct":    weekly_load_pct,
+            "sla_pressure_pct":   sla_pressure_pct,
+            "sla_breaching":      sla_breach_total,
+            "sla_at_risk":        sla_at_risk_total,
+            "sla_safe":           sla_safe_total,
+            "capacity_by_type":   capacity_by_type,
+            "sla_details":        sla_details,
+            "status":             status,
+            # kept for any legacy references
+            "load_pct":           sla_pressure_pct,
         })
 
-    members.sort(key=lambda x: x["load_pct"], reverse=True)
+    members.sort(key=lambda x: x["sla_pressure_pct"], reverse=True)
 
     return {
-        "members":          members,
-        "rates":            BANDWIDTH_RATES,
-        "hours_per_ticket": {sc: round(h, 2) for sc, h in hours_per_ticket.items()},
-        "weekly_capacity":  BANDWIDTH_WEEKLY_CAPACITY,
+        "members":              members,
+        "rates":                BANDWIDTH_RATES,
+        "weekly_capacity_days": BANDWIDTH_DAYS_PER_WEEK,
     }
 
 
