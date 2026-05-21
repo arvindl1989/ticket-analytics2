@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import pandas as pd
 import numpy as np
@@ -1115,4 +1115,13 @@ def _filter_by_range(
 _STATIC_DIR = Path(__file__).parent / "dist"
 
 if _STATIC_DIR.is_dir():
-    app.mount("/", StaticFiles(directory=str(_STATIC_DIR), html=True), name="static")
+    _INDEX_HTML = (_STATIC_DIR / "index.html").read_text()
+    app.mount("/assets", StaticFiles(directory=str(_STATIC_DIR / "assets")), name="assets")
+
+    @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+    async def serve_root():
+        return _INDEX_HTML
+
+    @app.get("/{full_path:path}", response_class=HTMLResponse, include_in_schema=False)
+    async def spa_fallback(full_path: str):
+        return _INDEX_HTML
