@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./
 COPY --from=frontend-builder /frontend/dist ./dist
 EXPOSE 8080
-CMD ["sh", "-c", "echo \">>> PORT=${PORT:-8080}\" && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers --forwarded-allow-ips='*' --log-level debug"]
+CMD ["python", "start.py"]
