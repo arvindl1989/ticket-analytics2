@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+﻿import { useState, useCallback } from 'react'
 import UploadZone        from './components/UploadZone'
 import DashboardPage     from './pages/DashboardPage'
 import PriorityPage      from './pages/PriorityPage'
@@ -8,11 +8,11 @@ import BandwidthPage     from './pages/BandwidthPage'
 import SlaConfigModal    from './components/SlaConfigModal'
 
 const TABS = [
-  { id: 'dashboard',     label: 'Dashboard',        icon: <GridIcon /> },
-  { id: 'priority',      label: 'Priority Tracker',  icon: <FlagIcon /> },
-  { id: 'analytics',     label: 'Analytics',         icon: <ChartIcon /> },
-  { id: 'user-activity', label: 'User Activity',     icon: <UsersIcon /> },
-  { id: 'bandwidth',     label: 'Bandwidth',         icon: <BoltIcon /> },
+  { id: 'dashboard',     label: 'Dashboard',       icon: <GridIcon /> },
+  { id: 'priority',      label: 'Priority Tracker', icon: <FlagIcon /> },
+  { id: 'analytics',     label: 'Analytics',        icon: <ChartIcon /> },
+  { id: 'user-activity', label: 'User Activity',    icon: <UsersIcon /> },
+  { id: 'bandwidth',     label: 'Bandwidth',        icon: <BoltIcon /> },
 ]
 
 export default function App() {
@@ -107,6 +107,9 @@ export default function App() {
   )
 }
 
+// â”€â”€ Hub URL comes from Railway env var VITE_HUB_URL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const HUB_URL = import.meta.env.VITE_HUB_URL || ''
+
 function AppHeader({ filename, totalRows, onReupload, onBack, onSlaConfig }) {
   return (
     <header style={{
@@ -117,6 +120,35 @@ function AppHeader({ filename, totalRows, onReupload, onBack, onSlaConfig }) {
       display: 'flex', alignItems: 'center', gap: 16,
       flexShrink: 0,
     }}>
+
+      {/* â”€â”€ Back to Aegis Hub â”€â”€ */}
+      {HUB_URL && (
+        <>
+          <a
+            href={HUB_URL}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              fontSize: 12, fontWeight: 600, color: '#6b7280',
+              textDecoration: 'none', flexShrink: 0,
+              padding: '5px 10px',
+              border: '1px solid #e5e7eb',
+              borderRadius: 7,
+              transition: 'all 0.15s',
+              fontFamily: 'Inter, sans-serif',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#1450f5'; e.currentTarget.style.color = '#1450f5'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.color = '#6b7280'; }}
+          >
+            {/* Shield icon */}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Hub
+          </a>
+          <div style={{ width: 1, height: 20, background: '#e5e8ef', flexShrink: 0 }} />
+        </>
+      )}
+
       {/* Brand */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
         <div style={{
@@ -138,7 +170,7 @@ function AppHeader({ filename, totalRows, onReupload, onBack, onSlaConfig }) {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
           </svg>
-          <span style={{ fontSize: 13, color: '#6b7280', truncate: true, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>{filename}</span>
+          <span style={{ fontSize: 13, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>{filename}</span>
           <span style={{
             fontSize: 11, fontWeight: 600, color: '#1450f5',
             background: '#eff4ff', border: '1px solid #c7d7fd',
@@ -165,7 +197,7 @@ function AppHeader({ filename, totalRows, onReupload, onBack, onSlaConfig }) {
         </button>
         {onBack && (
           <button onClick={onBack} style={{ background: 'none', border: 'none', fontSize: 13, color: '#6b7280', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-            ← Back
+            â† Back
           </button>
         )}
         {onReupload && (
@@ -191,42 +223,18 @@ function AppHeader({ filename, totalRows, onReupload, onBack, onSlaConfig }) {
 }
 
 function GridIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-    </svg>
-  )
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
 }
 function FlagIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
-    </svg>
-  )
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
 }
 function ChartIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
-      <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
-    </svg>
-  )
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
 }
 function UsersIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-  )
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
 }
 function BoltIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-    </svg>
-  )
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
 }
+
